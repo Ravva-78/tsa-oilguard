@@ -1,0 +1,133 @@
+{
+  "dataset_root": "C:\\Users\\nan33\\Downloads\\3w_dataset_2.0.0",
+  "project_root": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD",
+  "results_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\results",
+  "data_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\data",
+  "figures_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\results\\figures",
+  "metrics_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\results\\metrics",
+  "tables_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\results\\tables",
+  "logs_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\results\\logs",
+  "processed_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\data\\processed",
+  "report_dir": "C:\\Users\\nan33\\OneDrive\\Desktop\\TSA-OILGUARD\\report",
+  "event": {
+    "class_id": 2,
+    "name": "SPURIOUS_CLOSURE_OF_DHSV",
+    "steady_label": 2,
+    "transient_label": 102,
+    "target": "P-TPT",
+    "exog": "T-TPT",
+    "target_scale": 1e-06,
+    "exog_scale": 1.0,
+    "target_unit": "MPa",
+    "exog_unit": "degC"
+  },
+  "preprocessing": {
+    "resample_rule": "10s",
+    "ffill_limit_raw": 6,
+    "min_normal_samples": 30,
+    "split": [
+      0.6,
+      0.2,
+      0.2
+    ],
+    "min_calibration_samples": 5,
+    "min_holdout_samples": 5,
+    "max_missing_fraction": 0.2,
+    "max_gap_seconds": 600.0
+  },
+  "models": {
+    "max_p": 2,
+    "max_q": 2,
+    "max_order": 3,
+    "d_max": 1,
+    "trend": "n"
+  },
+  "warning": {
+    "quantile": 0.99,
+    "persistence": 3,
+    "cooldown_minutes": 30,
+    "detection_grace_minutes": 10,
+    "pre_event_grace_minutes": 10,
+    "threshold_floor": 0.0001,
+    "sensitivity_quantiles": [
+      0.95,
+      0.975,
+      0.99,
+      0.995
+    ],
+    "sensitivity_persistence": [
+      1,
+      3,
+      5
+    ]
+  },
+  "eda": {
+    "acf_lags": 60,
+    "decomposition_period": 360,
+    "max_examples": 6
+  },
+  "seed": 42,
+  "examples": [],
+  "raw": {
+    "dataset_root": "C:/Users/nan33/Downloads/3w_dataset_2.0.0",
+    "seed": 42,
+    "primary_event": {
+      "class_id": 2,
+      "name": "SPURIOUS_CLOSURE_OF_DHSV",
+      "steady_label": 2,
+      "transient_label": 102,
+      "target": "P-TPT",
+      "exog": "T-TPT",
+      "target_scale": 1e-06,
+      "exog_scale": 1.0,
+      "target_unit": "MPa",
+      "exog_unit": "degC"
+    },
+    "preprocessing": {
+      "resample_rule": "10s",
+      "ffill_limit_raw": 6,
+      "min_normal_samples": 30,
+      "split": [
+        0.6,
+        0.2,
+        0.2
+      ],
+      "min_calibration_samples": 5,
+      "min_holdout_samples": 5,
+      "max_missing_fraction": 0.2,
+      "max_gap_seconds": 600.0
+    },
+    "models": {
+      "max_p": 2,
+      "max_q": 2,
+      "max_order": 3,
+      "d_max": 1,
+      "trend": "n"
+    },
+    "warning": {
+      "quantile": 0.99,
+      "persistence": 3,
+      "cooldown_minutes": 30,
+      "detection_grace_minutes": 10,
+      "pre_event_grace_minutes": 10,
+      "threshold_floor": 0.0001,
+      "sensitivity_quantiles": [
+        0.95,
+        0.975,
+        0.99,
+        0.995
+      ],
+      "sensitivity_persistence": [
+        1,
+        3,
+        5
+      ]
+    },
+    "eda": {
+      "acf_lags": 60,
+      "decomposition_period": 360,
+      "max_examples": 6
+    },
+    "examples": []
+  }
+}
