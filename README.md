@@ -130,6 +130,7 @@ Because individual event calibration segments in 3W are brief ($H_{\text{calib}}
 
 ```
 TSA-OILGUARD/
+├── app.py                          # Interactive Streamlit Coastal Dashboard
 ├── config/
 │   └── experiment.json                 # Typed hyperparameters and sensor configs
 ├── data/
@@ -209,10 +210,17 @@ python scripts/run_audited_v2_evaluation.py
 python scripts/run_pipeline.py --config config/experiment.json
 ```
 
+### 5. Launch the Interactive Coastal Seashore Dashboard
+```powershell
+streamlit run app.py
+```
+*Launches the real-time telemetry replay, 3D subsea wellbore cutaway, DHSV flapper simulator, and fleet radar at `http://localhost:8501`.*
+
 ---
 
 ## 7. Deliverables Index
 
+- 🌐 **Interactive Streamlit Dashboard:** [`app.py`](app.py) *(Coastal Seashore & Subsea Intelligence)*
 - 📄 **Word Technical Report:** [`report/OILGUARD_Technical_Report.docx`](report/OILGUARD_Technical_Report.docx)  
 - 📝 **Markdown Technical Report:** [`report/OILGUARD_Technical_Report.md`](report/OILGUARD_Technical_Report.md)  
 - 📊 **PowerPoint Presentation:** [`report/OILGUARD_Presentation.pptx`](report/OILGUARD_Presentation.pptx)  

@@ -12,9 +12,11 @@ statsmodels==0.15.0
 scikit-learn==1.9.1
 patsy==1.0.3
 
-# Visualization & Plotting
+# Visualization & Interactive Dashboard
 matplotlib==3.11.2
 seaborn==0.13.2
+streamlit>=1.39
+plotly>=5.24
 
 # Testing & Code Quality
 pytest==9.1.1
