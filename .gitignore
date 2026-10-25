@@ -31,3 +31,9 @@ Desktop.ini
 # Temporary scratch & logs
 scratch/
 *.log
+
+# Raw datasets (keep processed 1.29MB cohort only)
+data/raw/
+*3w_dataset*
+*.csv.gz
+
