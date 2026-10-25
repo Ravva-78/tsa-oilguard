@@ -109,9 +109,16 @@ def evaluate_warning_run(
         else np.nan
     )
 
-    pre_transient = onsets_absolute < event.transient_pos
-    transient_early = bool(pre_transient.any())
-    transient_with_grace = bool((onsets_absolute <= event.transient_pos + grace_samples).any())
+    # Audited rule: An early warning must occur inside the accepted pre-event window [pre_event_start, transient_pos)
+    transient_early = bool(len(pre_event_onsets) > 0)
+    
+    # Detections occurring after transient onset within detection grace window [transient_pos, transient_pos + grace_samples]
+    post_transient_onsets = onsets_absolute[
+        (onsets_absolute >= event.transient_pos)
+        & (onsets_absolute <= event.transient_pos + grace_samples)
+    ]
+    transient_post_detected = bool(len(post_transient_onsets) > 0)
+    transient_with_grace = transient_early or transient_post_detected
 
     steady_early = False
     steady_with_grace = False
@@ -119,33 +126,37 @@ def evaluate_warning_run(
     lead_steady_minutes = np.nan
     first_warning_time: pd.Timestamp | None = None
     first_warning_phase = "none"
+    
     if len(onsets_absolute):
         first_position = int(onsets_absolute[0])
         first_warning_time = event.frame.index[first_position]
         first_warning_phase = _phase(first_position, event.transient_pos, event.steady_pos)
-        if first_position < event.transient_pos:
-            lead_transient_minutes = float(
-                (event.frame.index[event.transient_pos] - first_warning_time).total_seconds() / 60.0
-            )
-        if event.steady_pos is not None:
-            steady_onsets = onsets_absolute[
-                (onsets_absolute >= event.transient_pos) & (onsets_absolute < event.steady_pos)
-            ]
-            steady_early = bool(len(steady_onsets))
-            steady_with_grace = bool(
+        
+    if transient_early:
+        lead_transient_minutes = float(
+            (event.frame.index[event.transient_pos] - event.frame.index[int(pre_event_onsets[0])]).total_seconds()
+            / 60.0
+        )
+        
+    if event.steady_pos is not None:
+        steady_onsets = onsets_absolute[
+            (onsets_absolute >= event.transient_pos) & (onsets_absolute < event.steady_pos)
+        ]
+        steady_early = bool(len(steady_onsets))
+        steady_with_grace = bool(
+            (
+                (onsets_absolute >= event.transient_pos)
+                & (onsets_absolute <= event.steady_pos + grace_samples)
+            ).any()
+        )
+        if len(steady_onsets):
+            lead_steady_minutes = float(
                 (
-                    (onsets_absolute >= event.transient_pos)
-                    & (onsets_absolute <= event.steady_pos + grace_samples)
-                ).any()
+                    event.frame.index[event.steady_pos]
+                    - event.frame.index[int(steady_onsets[0])]
+                ).total_seconds()
+                / 60.0
             )
-            if len(steady_onsets):
-                lead_steady_minutes = float(
-                    (
-                        event.frame.index[event.steady_pos]
-                        - event.frame.index[int(steady_onsets[0])]
-                    ).total_seconds()
-                    / 60.0
-                )
 
     early_detected = steady_early if event.steady_pos is not None else transient_early
     early_target = "steady" if event.steady_pos is not None else "transient"
@@ -185,6 +196,7 @@ def evaluate_warning_run(
         "warning_precision": precision,
         "warning_precision_adjusted": precision_adjusted,
         "transient_early_detected": transient_early,
+        "transient_post_detected": transient_post_detected,
         "transient_detected_with_grace": transient_with_grace,
         "steady_early_detected": steady_early if event.steady_pos is not None else None,
         "steady_detected_with_grace": steady_with_grace if event.steady_pos is not None else None,

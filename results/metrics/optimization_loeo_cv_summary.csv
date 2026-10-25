@@ -1,0 +1,4 @@
+model,cv_strategy,total_events,unbiased_detection_rate,early_hits,unbiased_mean_lead_minutes,unbiased_median_lead_minutes,total_false_alarms,false_alarm_rate_per_hour,most_frequent_param
+arima,Leave-One-Event-Out (LOEO-CV),19,0.42105263157894735,8,5.104166666666666,5.166666666666666,5,4.30622009569378,"(1, 0.95)"
+sarimax,Leave-One-Event-Out (LOEO-CV),19,0.3684210526315789,7,4.261904761904762,4.5,6,5.167464114832535,"(2, 0.9)"
+naive,Leave-One-Event-Out (LOEO-CV),19,0.3684210526315789,7,1.6904761904761905,1.1666666666666667,4,3.4449760765550237,"(3, 0.95)"

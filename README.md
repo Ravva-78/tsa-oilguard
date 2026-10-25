@@ -7,7 +7,7 @@
 
 **OILGUARD** is an academic Time Series Analysis (TSA) research project investigating whether statistical forecasting residuals from **ARIMA** and **SARIMAX** models can provide reliable, actionable early warnings of abnormal events in offshore oil wells prior to transient onset, outperforming standard industrial persistence baselines.
 
-The project evaluates authentic offshore well telemetry from the **Petrobras 3W benchmark dataset**, focusing on **Class 2: Spurious Closure of Downhole Safety Valve (DHSV)**.
+The project evaluates authentic offshore well telemetry from the **Petrobras 3W benchmark dataset**, focusing on **Class 2: Spurious Closure of Downhole Safety Valve (DHSV)** across an audited gold cohort of **19 real-world events**.
 
 ---
 
@@ -16,21 +16,30 @@ The project evaluates authentic offshore well telemetry from the **Petrobras 3W 
 ### 1. Statistical Forecasting Accuracy (Test Split)
 Evaluated across 19 authentic real-world offshore shut-in events:
 
-| Model | MAE (MPa) | RMSE (MPa) | MAPE (%) | R² Score | Performance vs. Baseline |
+| Model | MAE (MPa) | RMSE (MPa) | MAPE (%) | R² Score | Bias (MPa) | Performance vs. Baseline |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **ARIMA(p, d, q)** | **0.0163** | **0.0524** | **8.69%** | **0.9994** | +0.0075 | **47.1% Lower MAE** |
+| **SARIMAX (+T-TPT)** | **0.0162** | **0.0523** | **8.63%** | **0.9994** | +0.0074 | **47.4% Lower MAE** |
+| **Naive Baseline** | 0.0307 | 0.0781 | 18.22% | 0.9988 | +0.0194 | Reference Baseline |
+
+### 2. Unbiased Early Warning Performance (Leave-One-Event-Out CV)
+To prevent optimization leakage, thresholds were calibrated strictly on training folds and evaluated on unseen holdout events:
+
+| Model | CV Strategy | Denominator | Unbiased Detection Rate | Early Hits | Mean Lead Time | Median Lead Time | FAR (/hr) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **ARIMA** | LOEO-CV | 19 | **42.1%** | 8 | **5.10 min** | **5.17 min** | 4.31 |
+| **SARIMAX** | LOEO-CV | 19 | **36.8%** | 7 | 4.26 min | 4.50 min | 5.17 |
+| **Naive Baseline** | LOEO-CV | 19 | 36.8% | 7 | 1.69 min | 1.17 min | 3.44 |
+
+*Key finding: In honest cross-validation, ARIMA delivers **over 3× greater advance lead time** than the Naive baseline (5.10 min vs 1.69 min).*
+
+### 3. Residual Optimization & Sensitivity Ceilings
+Evaluating retrospective parameter grids and EWMA filtered residuals on the 19-event cohort:
+
+| Technique & Configuration | ARIMA Detection Rate | Naive Baseline | ARIMA Lead Time | False Alarm Rate | Advantage |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **ARIMA(p, d, q)** | **0.0163** | **0.0524** | **8.69%** | **0.9994** | **47.1% Lower MAE** |
-| **SARIMAX (+T-TPT)** | **0.0162** | **0.0523** | **8.63%** | **0.9994** | **47.4% Lower MAE** |
-| **Naive Baseline** | 0.0307 | 0.0781 | 18.22% | 0.9988 | Reference Baseline |
-
-### 2. Early Warning Detection & Optimization
-Under initial arbitrary thresholds ($q=0.99, p=3$), the Naive baseline produced higher false alarms during normal operations, leading to the *"Noisy Baseline Paradox"*. Deploying optimization techniques unlocked decisive early detection dominance:
-
-| Configuration | ARIMA Detection Rate | Naive Baseline | Lead Time (min) | Advantage |
-| :--- | :---: | :---: | :---: | :---: |
-| **Pareto Grid Search ($p=1, q=0.95$)** | **85.0%** (17/20) | 70.0% | **7.71 min** | **+15.0% Higher Detection** |
-| **EWMA Filtered Residuals ($\lambda=0.5, q=0.975$)** | **80.0%** (16/20) | 60.0% | **7.73 min** | **+20.0% Higher Detection** |
-
-An average lead time of **~8 minutes** gives offshore supervisory control systems sufficient advance time to adjust chokes and mitigate destructive pressure surges.
+| **Pareto Grid Search ($p=1, q=0.95$)** | **63.2%** (12/19) | 52.6% (10/19) | **5.35 min** | 3.44 / hr | **+10.6% Higher Detection** |
+| **EWMA Filtered ($S_t, \lambda=0.3, q=0.975$)** | **57.9%** (11/19) | 42.1% (8/19) | **3.53 min** | 1.72 / hr | **+15.8% Higher Detection** |
 
 ---
 
@@ -47,7 +56,7 @@ All completed project deliverables are organized as follows:
 - 📊 **PowerPoint Presentation:** [`report/OILGUARD_Presentation.pptx`](report/OILGUARD_Presentation.pptx)  
   *16:9 widescreen presentation slides covering industrial context, dataset filtering, forecasting results, anomaly diagnosis, and optimization.*
 - 📰 **Blog Article:** [`report/OILGUARD_Blog_Post.md`](report/OILGUARD_Blog_Post.md)  
-  *Engaging 1,150-word technical article explaining the project, the noisy baseline paradox, and the real-world value of 8-minute early warnings.*
+  *Engaging 1,150-word technical article explaining the project, the noisy baseline paradox, and the real-world value of 5-minute early warnings.*
 
 ---
 
@@ -58,7 +67,7 @@ TSA-OILGUARD/
 ├── config/
 │   └── experiment.json               # Typed pipeline & model hyperparameters
 ├── data/
-│   └── processed/                    # Scanned manifest.parquet & 20 per-event parquets
+│   └── processed/                    # Scanned manifest.parquet & 19 per-event parquets
 ├── notebooks/
 │   └── oilguard_walkthrough.ipynb     # Executed reproducible walkthrough
 ├── report/
@@ -94,33 +103,28 @@ TSA-OILGUARD/
 ## Quick Start & Reproduction
 
 ### 1. Environment Setup
-```bash
-# Clone the repository
-git clone <repo-url>
-cd TSA-OILGUARD
-
+```powershell
 # Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate       # On Linux/macOS
-.\.venv\Scripts\Activate.ps1    # On Windows PowerShell
+.\.venv\Scripts\Activate.ps1
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
 ### 2. Run Unit Tests
-```bash
+```powershell
 pytest tests/ -v
 ```
 
 ### 3. Run Warning System Optimization
-```bash
+```powershell
 python scripts/optimize_warning.py
 ```
 Outputs the Pareto frontier figure to `results/figures/warning_optimization_pareto.png` and summary tables to `results/metrics/`.
 
 ### 4. Run the Full Pipeline
-```bash
+```powershell
 python scripts/run_pipeline.py --config config/experiment.json
 ```
 

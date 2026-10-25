@@ -123,11 +123,105 @@ def test_warning_metrics_separate_pre_event_false_alarms() -> None:
     assert metrics["normal_hours_adjusted"] == pytest.approx(0.15)
     assert metrics["false_alarm_rate_adjusted"] == pytest.approx(2 / (54 * 10 / 3600))
     assert metrics["transient_early_detected"] is True
-    assert metrics["lead_transient_minutes"] == pytest.approx(500 / 60)
+    assert metrics["lead_transient_minutes"] == pytest.approx(50 / 60)
     assert metrics["steady_early_detected"] is True
     assert metrics["lead_steady_minutes"] == pytest.approx(100 / 60)
     assert metrics["warning_precision"] == pytest.approx(2 / 5)
     assert metrics["warning_precision_adjusted"] == pytest.approx(2 / 4)
+
+
+def test_ordinary_false_alarm_not_counted_as_early_warning() -> None:
+    """An alarm during ordinary operation must NOT be counted as an early warning."""
+    periods = 100
+    index = pd.date_range("2020-01-01", periods=periods, freq="10s")
+    class_values = np.zeros(periods)
+    class_values[60:] = 102
+    frame = pd.DataFrame({"class": class_values}, index=index)
+    residuals = np.zeros(periods)
+    # Alarm only at index 10 (well before pre-event window [54, 60))
+    residuals[10] = 2.0
+    run = ForecastRun(
+        name="test",
+        order=(0, 0, 0),
+        start_pos=0,
+        pred=np.zeros(periods),
+        resid=residuals,
+        fit_seconds=0.0,
+        aic=0.0,
+        converged=True,
+        n_train=periods,
+    )
+    event = SimpleNamespace(
+        event_id="class_2/test_fa",
+        stem="test_fa",
+        well_id="WELL-00099",
+        frame=frame,
+        resample_seconds=10,
+        holdout_start_pos=0,
+        transient_pos=60,
+        steady_pos=None,
+        transient_onset=index[60],
+        steady_onset=None,
+    )
+    metrics = evaluate_warning_run(
+        run=run,
+        event=event,
+        threshold=1.0,
+        persistence=1,
+        cooldown_minutes=0.2,
+        detection_grace_minutes=1.0,
+        pre_event_grace_minutes=1.0,
+    )
+    assert metrics["transient_early_detected"] is False
+    assert np.isnan(metrics["lead_transient_minutes"])
+    assert metrics["false_alarms_adjusted"] == 1
+
+
+def test_pre_event_boundary_condition() -> None:
+    """Alarm on exact pre-event boundary [pre_event_start, transient_pos) must count as early."""
+    periods = 100
+    index = pd.date_range("2020-01-01", periods=periods, freq="10s")
+    class_values = np.zeros(periods)
+    class_values[60:] = 102
+    frame = pd.DataFrame({"class": class_values}, index=index)
+    residuals = np.zeros(periods)
+    # Exact boundary: index 54 = 60 - 6 samples
+    residuals[54] = 2.0
+    run = ForecastRun(
+        name="test",
+        order=(0, 0, 0),
+        start_pos=0,
+        pred=np.zeros(periods),
+        resid=residuals,
+        fit_seconds=0.0,
+        aic=0.0,
+        converged=True,
+        n_train=periods,
+    )
+    event = SimpleNamespace(
+        event_id="class_2/test_boundary",
+        stem="test_boundary",
+        well_id="WELL-00099",
+        frame=frame,
+        resample_seconds=10,
+        holdout_start_pos=0,
+        transient_pos=60,
+        steady_pos=None,
+        transient_onset=index[60],
+        steady_onset=None,
+    )
+    metrics = evaluate_warning_run(
+        run=run,
+        event=event,
+        threshold=1.0,
+        persistence=1,
+        cooldown_minutes=0.2,
+        detection_grace_minutes=1.0,
+        pre_event_grace_minutes=1.0,
+    )
+    assert metrics["transient_early_detected"] is True
+    assert metrics["lead_transient_minutes"] == pytest.approx(60 / 60)
+    assert metrics["false_alarms_adjusted"] == 0
 
 
 def test_build_event_dataset_from_synthetic_parquet(tmp_path: Path) -> None:
