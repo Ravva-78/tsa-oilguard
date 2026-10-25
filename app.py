@@ -8,6 +8,7 @@ from pathlib import Path
 import os
 import glob
 import time
+import base64
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -39,212 +40,267 @@ if not (ROOT / "results").exists() and (ROOT.parent / "results").exists():
 METRICS_DIR = ROOT / "results" / "audited_v2" / "metrics"
 TABLES_DIR = ROOT / "results" / "audited_v2" / "tables"
 EVENTS_DIR = ROOT / "data" / "processed" / "events"
+ASSETS_DIR = ROOT / "assets" / "images"
+
+# -----------------------------------------------------------------------------
+# Image Loading & Base64 Encoding
+# -----------------------------------------------------------------------------
+def get_image_base64(image_path):
+    p = Path(image_path)
+    if not p.is_absolute():
+        p = ROOT / p
+    if p.exists():
+        with open(p, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
+
+hero_b64 = get_image_base64("assets/images/hero_offshore_rig.jpg")
+cutaway_b64 = get_image_base64("assets/images/subsea_wellbore_cutaway.jpg")
+bridge_b64 = get_image_base64("assets/images/command_bridge.jpg")
 
 # -----------------------------------------------------------------------------
 # Cybernetic Oceanic CSS Theme
 # -----------------------------------------------------------------------------
-st.markdown("""
+hero_bg_css = f'url("data:image/jpeg;base64,{hero_b64}")' if hero_b64 else 'none'
+bridge_bg_css = f'url("data:image/jpeg;base64,{bridge_b64}")' if bridge_b64 else 'none'
+
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
-html, body, [class*="css"] {
+html, body, [class*="css"] {{
     font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
-}
+}}
 
-.stApp {
+.stApp {{
     background: radial-gradient(ellipse at 15% 0%, rgba(0, 245, 212, 0.12), transparent 45%),
                 radial-gradient(ellipse at 85% 10%, rgba(0, 187, 249, 0.14), transparent 40%),
-                radial-gradient(circle at 50% 90%, rgba(10, 37, 64, 0.4), transparent 60%),
+                radial-gradient(circle at 50% 90%, rgba(10, 37, 64, 0.5), transparent 60%),
                 #030914;
     color: #e2f1f8;
-}
+}}
 
-[data-testid="stSidebar"] {
+[data-testid="stSidebar"] {{
     background: linear-gradient(180deg, #071526 0%, #040c17 100%);
-    border-right: 1px solid rgba(0, 245, 212, 0.15);
-}
+    border-right: 1px solid rgba(0, 245, 212, 0.2);
+}}
 
-.block-container {
-    padding-top: 1.2rem;
+.block-container {{
+    padding-top: 1.0rem;
     padding-bottom: 2.5rem;
-    max-width: 1650px;
-}
+    max-width: 1680px;
+}}
+
+/* Hero Cinematic Banner Card */
+.hero-cinematic-banner {{
+    position: relative;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 245, 212, 0.35);
+    background: linear-gradient(180deg, rgba(3, 9, 20, 0.3) 0%, rgba(3, 9, 20, 0.88) 85%, #030914 100%),
+                {hero_bg_css} center/cover no-repeat;
+    padding: 2.6rem 2.8rem 2.2rem 2.8rem;
+    margin-bottom: 1.6rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 245, 212, 0.12);
+    overflow: hidden;
+}}
+
+.hero-cinematic-banner::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 90% 20%, rgba(0, 245, 212, 0.15), transparent 40%);
+    pointer-events: none;
+}}
+
+.bridge-banner-card {{
+    border-radius: 16px;
+    border: 1px solid rgba(0, 187, 249, 0.3);
+    background: linear-gradient(180deg, rgba(4, 14, 26, 0.45) 0%, rgba(4, 14, 26, 0.92) 100%),
+                {bridge_bg_css} center/cover no-repeat;
+    padding: 1.6rem 2.0rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}}
 
 /* Glassmorphism Panels */
-.glass-panel {
-    background: linear-gradient(135deg, rgba(13, 31, 51, 0.7) 0%, rgba(6, 18, 33, 0.8) 100%);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 245, 212, 0.18);
+.glass-panel {{
+    background: linear-gradient(135deg, rgba(13, 31, 51, 0.75) 0%, rgba(6, 18, 33, 0.88) 100%);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(0, 245, 212, 0.22);
     border-radius: 16px;
-    padding: 1.2rem 1.4rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    margin-bottom: 1rem;
-}
+    padding: 1.3rem 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    margin-bottom: 1.2rem;
+}}
 
-.glass-panel-glow {
-    border: 1px solid rgba(0, 245, 212, 0.4);
-    box-shadow: 0 0 25px rgba(0, 245, 212, 0.15);
-}
+.glass-panel-glow {{
+    border: 1px solid rgba(0, 245, 212, 0.45);
+    box-shadow: 0 0 25px rgba(0, 245, 212, 0.18), 0 8px 32px rgba(0, 0, 0, 0.5);
+}}
 
 /* Typography & Headings */
-h1, h2, h3, h4 {
+h1, h2, h3, h4 {{
     font-family: 'Outfit', sans-serif;
     color: #f0f8ff;
     letter-spacing: -0.025em;
     font-weight: 700;
-}
+}}
 
-.code-font {
+.code-font {{
     font-family: 'DM Mono', monospace;
-}
+}}
 
-.hero-tag {
+.hero-tag {{
     font-family: 'DM Mono', monospace;
     font-size: 0.72rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: #00f5d4;
-    background: rgba(0, 245, 212, 0.08);
-    border: 1px solid rgba(0, 245, 212, 0.25);
-    padding: 0.35rem 0.75rem;
+    background: rgba(0, 245, 212, 0.12);
+    border: 1px solid rgba(0, 245, 212, 0.35);
+    padding: 0.35rem 0.8rem;
     border-radius: 999px;
     display: inline-block;
-    margin-bottom: 0.5rem;
-}
+    margin-bottom: 0.6rem;
+    font-weight: 600;
+}}
 
-.hero-title {
-    font-size: clamp(2.0rem, 3.8vw, 3.2rem);
+.hero-tag-amber {{
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}}
+
+.hero-title {{
+    font-size: clamp(2.2rem, 4.2vw, 3.5rem);
     font-weight: 800;
     line-height: 1.05;
-    background: linear-gradient(90deg, #ffffff 30%, #a5f3fc 70%, #00f5d4 100%);
+    background: linear-gradient(90deg, #ffffff 25%, #a5f3fc 65%, #00f5d4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin: 0.3rem 0 0.6rem 0;
-}
+    margin: 0.2rem 0 0.6rem 0;
+}}
 
-.hero-sub {
-    color: #94a3b8;
-    font-size: 1.02rem;
+.hero-sub {{
+    color: #cbd5e1;
+    font-size: 1.05rem;
     max-width: 950px;
     line-height: 1.6;
-}
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}}
 
 /* Status Badges */
-.badge-normal {
+.badge-normal {{
     display: inline-flex;
     align-items: center;
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.5);
     color: #34d399;
-    padding: 0.35rem 0.8rem;
-    border-radius: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-
-.badge-warning {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(245, 158, 11, 0.18);
-    border: 1px solid rgba(245, 158, 11, 0.5);
-    color: #fbbf24;
-    padding: 0.35rem 0.8rem;
-    border-radius: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-
-.badge-danger {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(239, 68, 68, 0.22);
-    border: 1px solid rgba(239, 68, 68, 0.6);
-    color: #f87171;
-    padding: 0.35rem 0.8rem;
+    padding: 0.4rem 0.9rem;
     border-radius: 8px;
     font-family: 'DM Mono', monospace;
     font-size: 0.85rem;
     font-weight: 700;
-    animation: pulse 1.5s infinite;
-}
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}}
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
+.badge-warning {{
+    display: inline-flex;
+    align-items: center;
+    background: rgba(245, 158, 11, 0.22);
+    border: 1px solid rgba(245, 158, 11, 0.6);
+    color: #fbbf24;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}}
+
+.badge-danger {{
+    display: inline-flex;
+    align-items: center;
+    background: rgba(239, 68, 68, 0.28);
+    border: 1px solid rgba(239, 68, 68, 0.7);
+    color: #fca5a5;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.88rem;
+    font-weight: 800;
+    animation: pulse 1.4s infinite;
+}}
+
+@keyframes pulse {{
+    0% {{ box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }}
+    70% {{ box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }}
+    100% {{ box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }}
+}}
 
 /* Metric Cards */
-div[data-testid="stMetric"] {
-    background: linear-gradient(135deg, rgba(11, 28, 48, 0.7) 0%, rgba(6, 18, 33, 0.9) 100%);
-    border: 1px solid rgba(0, 245, 212, 0.2);
+div[data-testid="stMetric"] {{
+    background: linear-gradient(135deg, rgba(11, 28, 48, 0.75) 0%, rgba(6, 18, 33, 0.92) 100%);
+    border: 1px solid rgba(0, 245, 212, 0.22);
     border-radius: 14px;
-    padding: 1rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
+    padding: 1.1rem;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+}}
 
-div[data-testid="stMetricLabel"] {
+div[data-testid="stMetricLabel"] {{
     color: #94a3b8;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-}
+}}
 
-div[data-testid="stMetricValue"] {
+div[data-testid="stMetricValue"] {{
     color: #f0fdf4;
     font-family: 'Outfit', sans-serif;
-    font-size: 1.85rem;
+    font-size: 1.9rem;
     font-weight: 800;
-}
+}}
 
 /* Custom Tabs */
-.stTabs [data-baseweb="tab-list"] {
+.stTabs [data-baseweb="tab-list"] {{
     gap: 8px;
-    border-bottom: 1px solid rgba(0, 245, 212, 0.2);
+    border-bottom: 1px solid rgba(0, 245, 212, 0.25);
     padding-bottom: 4px;
-}
+}}
 
-.stTabs [data-baseweb="tab"] {
-    background: rgba(13, 31, 51, 0.5);
+.stTabs [data-baseweb="tab"] {{
+    background: rgba(13, 31, 51, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px 10px 0 0;
     color: #94a3b8;
-    padding: 8px 16px;
+    padding: 8px 18px;
     font-weight: 600;
     transition: all 0.2s ease;
-}
+}}
 
-.stTabs [aria-selected="true"] {
-    background: rgba(0, 245, 212, 0.12) !important;
-    border-color: rgba(0, 245, 212, 0.5) !important;
+.stTabs [aria-selected="true"] {{
+    background: rgba(0, 245, 212, 0.15) !important;
+    border-color: rgba(0, 245, 212, 0.6) !important;
     color: #00f5d4 !important;
-}
+}}
 
 /* Buttons */
-.stButton > button, .stDownloadButton > button {
+.stButton > button, .stDownloadButton > button {{
     background: linear-gradient(135deg, #00f5d4 0%, #00bbf9 100%);
     color: #030914;
     border: none;
     border-radius: 10px;
     font-weight: 700;
-    padding: 0.55rem 1.2rem;
+    padding: 0.55rem 1.3rem;
     transition: all 0.25s ease;
-}
+}}
 
-.stButton > button:hover, .stDownloadButton > button:hover {
+.stButton > button:hover, .stDownloadButton > button:hover {{
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 245, 212, 0.35);
+    box-shadow: 0 6px 22px rgba(0, 245, 212, 0.4);
     color: #030914;
-}
-
-/* Slider */
-.stSlider {
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -289,16 +345,16 @@ def load_event_dataframe(stem):
         return df
     return None
 
-def style_plot(fig, height=380):
+def style_plot(fig, height=390):
     fig.update_layout(
         height=height,
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(6, 18, 33, 0.35)",
+        plot_bgcolor="rgba(6, 18, 33, 0.45)",
         font=dict(color="#cbd5e1", family="Outfit"),
         margin=dict(l=20, r=20, t=40, b=25),
         legend=dict(
-            bgcolor="rgba(6, 18, 33, 0.7)",
-            bordercolor="rgba(0, 245, 212, 0.2)",
+            bgcolor="rgba(6, 18, 33, 0.75)",
+            bordercolor="rgba(0, 245, 212, 0.25)",
             borderwidth=1,
             font=dict(size=11)
         ),
@@ -326,16 +382,16 @@ outcomes_df = load_event_outcomes()
 with st.sidebar:
     st.markdown("""
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-            <span style="font-size:2rem;">🌊</span>
+            <span style="font-size:2.2rem;">🌊</span>
             <div>
-                <div style="font-size:1.3rem; font-weight:800; color:#f0f8ff; line-height:1.1;">OILGUARD</div>
+                <div style="font-size:1.4rem; font-weight:800; color:#f0f8ff; line-height:1.1;">OILGUARD</div>
                 <div style="font-size:0.75rem; color:#00f5d4; font-family:'DM Mono'; letter-spacing:0.12em;">SUBSEA EARLY WARNING</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
     
     st.markdown('<div class="hero-tag">SANTOS BASIN PRE-SALT</div>', unsafe_allow_html=True)
-    st.caption("Deepwater Offshore Telemetry Platform • Petrobras 3W Benchmark (Class 2)")
+    st.caption("Ultra-Deepwater Offshore Telemetry • Petrobras 3W Benchmark (Class 2)")
     
     st.markdown("---")
     
@@ -355,12 +411,9 @@ with st.sidebar:
     st.markdown("---")
     st.markdown('<div class="hero-tag">QUICK WELL SELECTOR</div>', unsafe_allow_html=True)
     
-    default_event = available_events[0] if available_events else "None"
-    # Find a nice default event like WELL-00003_20141122190000
+    default_idx = 0
     if "WELL-00003_20141122190000" in available_events:
         default_idx = available_events.index("WELL-00003_20141122190000")
-    else:
-        default_idx = 0
         
     selected_event_stem = st.selectbox(
         "Active Event Stream",
@@ -377,7 +430,7 @@ with st.sidebar:
         value=1.00,
         format_func=lambda x: f"{x:.2f} FA / normal hr"
     )
-    st.caption("Industrial SCADA safety rule: Operators routinely disable alert systems exceeding 1.0 false alarm / shift.")
+    st.caption("Industrial SCADA safety constraint: Platform operators disable supervisory alarms producing > 1.0 false alarm / shift.")
     
     st.markdown("---")
     sound_alert = st.toggle("🔊 Audio Alarm Beep on Trigger", value=True)
@@ -391,13 +444,19 @@ with st.sidebar:
 # Module 1: Offshore Command Deck
 # -----------------------------------------------------------------------------
 if selected_nav == "🛰️ Offshore Command Deck":
-    st.markdown('<span class="hero-tag">FLEET COMMAND BRIDGEDECK</span>', unsafe_allow_html=True)
-    st.markdown('<h1 class="hero-title">Offshore Subsea Surveillance & Fleet Radar</h1>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="hero-sub">Autonomous telemetry monitoring and statistical anomaly forecasting for 19 authentic deepwater well completions '
-        'across the Santos Basin Pre-Salt province. Detecting incipient flapper throttling before hydrodynamic pressure collapse.</p>',
-        unsafe_allow_html=True
-    )
+    # Cinematic Full-Bleed Hero Banner
+    st.markdown("""
+        <div class="hero-cinematic-banner">
+            <span class="hero-tag">OFFSHORE SURVEILLANCE FLEET</span>
+            <span class="hero-tag hero-tag-amber">2,180m WATER DEPTH</span>
+            <span class="hero-tag">19 REAL SHUTDOWN EVENTS</span>
+            <h1 class="hero-title">See the Signal Before the Shutdown.</h1>
+            <p class="hero-sub">
+                Autonomous acoustic telemetry surveillance and statistical anomaly forecasting across 19 authentic deepwater well completions 
+                in the Santos Basin Pre-Salt province. Detecting incipient downhole flapper throttling minutes before hydrodynamic pressure collapse.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
     
     # Top KPI Metrics Row
     m1, m2, m3, m4, m5 = st.columns(5)
@@ -408,19 +467,19 @@ if selected_nav == "🛰️ Offshore Command Deck":
     with m3:
         st.metric("Top LOWO Detection", "73.7%", "14 of 19 (Cross-Well)")
     with m4:
-        st.metric("Mean Advance Warning", "4.83 min", "Before Transient Onset")
+        st.metric("Mean Advance Notice", "4.83 min", "Before Transient Onset")
     with m5:
         st.metric("Realized Normal FAR", "0.50 / hr", "2 Alarms / 3.98 hr Holdout")
 
-    # Layout: Subsea GIS Radar & Fleet Wells
+    # Command Bridge Banner & GIS Radar
     c_left, c_right = st.columns([1.3, 1.0])
     
     with c_left:
         st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
         st.markdown("### 🌐 Santos Basin Deepwater Pre-Salt Subsea Cluster")
-        st.caption("Coordinates: 24°S - 26°S, 43°W - 44°W | Water Depth: 2,100m to 2,400m Subsea")
+        st.caption("Coordinates: 24°S - 26°S, 43°W - 44°W | Water Column: 2,100m to 2,400m Subsea Mudline")
         
-        # Build 3D Geospatial / Scatter Map of the 5 Wells
+        # Build Geospatial Scatter Map of the 5 Wells
         well_data = pd.DataFrame([
             {"Well": "WELL-00011", "Lat": -25.02, "Lon": -43.45, "Depth_m": 2180, "Events": 12, "Base_P": "15.4 MPa", "Status": "Active - 12 Closures", "Color": "#00f5d4"},
             {"Well": "WELL-00003", "Lat": -25.20, "Lon": -43.70, "Depth_m": 2240, "Events": 3, "Base_P": "9.5 MPa", "Status": "Active - 3 Closures", "Color": "#00bbf9"},
@@ -437,7 +496,7 @@ if selected_nav == "🛰️ Offshore Command Deck":
             color="Well",
             hover_name="Well",
             hover_data=["Depth_m", "Base_P", "Events", "Status"],
-            size_max=35,
+            size_max=36,
             color_discrete_map={w: c for w, c in zip(well_data["Well"], well_data["Color"])}
         )
         
@@ -458,49 +517,36 @@ if selected_nav == "🛰️ Offshore Command Deck":
             xaxis=dict(range=[-44.2, -42.7]),
             yaxis=dict(range=[-25.6, -24.4]),
         )
-        st.plotly_chart(style_plot(fig_map, height=420), width='stretch')
+        st.plotly_chart(style_plot(fig_map, height=430), width='stretch')
         st.markdown('</div>', unsafe_allow_html=True)
         
     with c_right:
-        st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
-        st.markdown("### 🚢 FPSO Topside Facility Status")
-        st.caption("Vessel: P-67 / Búzios Production Node | Supervisory Host")
-        
-        st.markdown("""
-            <div style="background:rgba(6, 18, 33, 0.6); border-radius:12px; padding:1rem; border:1px solid rgba(255,255,255,0.08); margin-bottom:1rem;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="color:#94a3b8; font-size:0.85rem;">SURVEILLANCE MODE</span>
-                    <span class="badge-normal">ONLINE • 1 Hz TELEMETRY</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="color:#94a3b8; font-size:0.85rem;">SUBSEA PRODUCTION CLUSTER</span>
-                    <span style="color:#f0f8ff; font-weight:600;">Santos Basin Pre-Salt</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="color:#94a3b8; font-size:0.85rem;">ACTIVE TRANSDUCERS</span>
-                    <span style="color:#00f5d4; font-family:'DM Mono';">P-TPT (MPa) + T-TPT (°C)</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                    <span style="color:#94a3b8; font-size:0.85rem;">ACOUSTIC SHOCK PROTECTION</span>
-                    <span style="color:#38bdf8; font-weight:600;">Decision Support Armed</span>
+        # Control Bridge Card
+        st.markdown(f"""
+            <div class="bridge-banner-card">
+                <div style="font-size:0.75rem; color:#00f5d4; font-family:'DM Mono'; letter-spacing:0.12em;">SCADA SURVEILLANCE BRIDGE</div>
+                <div style="font-size:1.35rem; font-weight:800; color:#f0f8ff; margin:4px 0 8px 0;">Offshore Cybernetic Control Deck</div>
+                <div style="color:#cbd5e1; font-size:0.85rem; line-height:1.5;">
+                    Centralized platform telemetry monitoring downhole acoustic wave propagation and surface choke backpressure across the Santos Basin subsea cluster.
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
+        st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
         st.markdown("#### Physical Wells Breakdown")
         st.dataframe(
             well_data[["Well", "Events", "Depth_m", "Base_P", "Status"]],
             hide_index=True,
             width='stretch'
         )
-        st.info("💡 **Asset Clustering Insight:** `WELL-00011` accounts for 63.2% of all authentic Class 2 events. Evaluating cross-well generalization requires genuine Leave-One-Well-Out validation.")
+        st.info("💡 **Asset Clustering Insight:** `WELL-00011` accounts for 63.2% of all authentic Class 2 events. Evaluating genuine cross-well generalization requires Leave-One-Well-Out (LOWO-CV) validation.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # Module 2: Real-Time Telemetry Replay Lab
 # -----------------------------------------------------------------------------
 elif selected_nav == "⚡ Real-Time Telemetry Replay":
-    st.markdown('<span class="hero-tag">INTERACTIVE REPLAY & SIMULATION</span>', unsafe_allow_html=True)
+    st.markdown('<span class="hero-tag">INTERACTIVE STREAM REPLAY & HUD</span>', unsafe_allow_html=True)
     st.markdown(f'<h1 class="hero-title">Live Telemetry Replay: {selected_event_stem}</h1>', unsafe_allow_html=True)
     st.markdown(
         '<p class="hero-sub">Replay authentic 1 Hz downhole telemetry sample-by-sample. Observe the rolling statistical forecast, '
@@ -563,7 +609,6 @@ elif selected_nav == "⚡ Real-Time Telemetry Replay":
         minutes_to_transient = seconds_to_transient / 60.0
         
         # Anomaly scoring & warning state
-        # Calibrate baseline noise scale from calibration split
         calib_mask = event_df["split"].str.lower().str.contains("calib")
         if not calib_mask.any():
             calib_mask = event_df["split"] == "train"
@@ -736,117 +781,81 @@ elif selected_nav == "🌊 Subsea Wellbore & DHSV Flapper":
     st.markdown('<h1 class="hero-title">Subsea Wellbore Architecture & DHSV Flapper Visualizer</h1>', unsafe_allow_html=True)
     st.markdown(
         '<p class="hero-sub">Explore the physical subsea architecture of an authentic Santos Basin offshore well completion. '
-        'Understand how an uncommanded Downhole Safety Valve (DHSV) flapper throttling creates acoustic pressure wave propagation '
-        'and why thermal inertia causes downhole temperature to lag pressure drops.</p>',
+        'Inspect the 3D cutaway showing the seabed Christmas Tree, Downhole Safety Valve (DHSV) flapper, and downhole transducers.</p>',
         unsafe_allow_html=True
     )
     
-    col_schematic, col_physics = st.columns([1.2, 1.0])
+    # 3D Cutaway Image Display with Interactive Control
+    col_img, col_flapper = st.columns([1.3, 1.0])
     
-    with col_schematic:
+    with col_img:
+        st.markdown('<div class="glass-panel glass-panel-glow">', unsafe_allow_html=True)
+        st.markdown("### 🔍 3D Subsea Wellbore Cutaway Architecture")
+        
+        # Render the generated photorealistic 3D cutaway image
+        cutaway_path = ROOT / "assets" / "images" / "subsea_wellbore_cutaway.jpg"
+        if cutaway_path.exists():
+            st.image(str(cutaway_path), use_container_width=True, caption="Figure: High-Resolution 3D Technical Cutaway of Subsea Wellhead, Mudline (1,850m), DHSV Flapper, and Pre-Salt Formation.")
+        else:
+            st.warning("Cutaway image asset not found.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with col_flapper:
         st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
-        st.markdown("### 🏗️ Subsea Wellbore Physical Architecture")
+        st.markdown("### 🎛️ Simulate DHSV Mechanical Flapper State")
         
         valve_state = st.radio(
-            "Simulate DHSV Mechanical State:",
+            "Flapper Actuation State:",
             ["🟢 Fully Open (Steady State)", "🟡 Incipient Throttling (Flapper Flutter)", "🔴 Spurious Closure (Sealed Barrier)"],
-            horizontal=True
+            index=1
         )
         
         if "Fully Open" in valve_state:
-            flapper_angle = "90° (Vertical - Unrestricted Flow)"
+            flapper_angle = "90° (Vertical - Unrestricted Multiphase Flow)"
             flapper_color = "#10b981"
-            p_flow = "15.4 MPa (Nominal Steady Flow)"
+            p_flow = "15.4 MPa (Nominal Steady Production)"
             t_flow = "112.5 °C (Thermal Equilibrium)"
-            acoustic_status = "No acoustic reflections; continuous laminar/slug flow"
+            acoustic_status = "Laminar/slug multiphase flow; no anomalous acoustic reflections"
         elif "Incipient" in valve_state:
-            flapper_angle = "30° (Choked Orifice - Incipient Shock Wave)"
+            flapper_angle = "30° (Choked Orifice - Incipient Acoustic Drop)"
             flapper_color = "#f59e0b"
-            p_flow = "15.1 MPa (Incipient Acoustic Drop)"
-            t_flow = "112.4 °C (Lagging Thermal Change)"
-            acoustic_status = "Acoustic wave (c ≈ 1,000 m/s) propagating upward toward surface choke"
+            p_flow = "15.1 MPa (Early Pressure Divergence Detected)"
+            t_flow = "112.4 °C (Lagging Thermal Change due to Thermal Inertia)"
+            acoustic_status = "Acoustic wave (c ≈ 1,000 m/s) propagating upward toward surface chokes"
         else:
-            flapper_angle = "0° (Sealed Horizontal - Full Flow Interruption)"
+            flapper_angle = "0° (Sealed Horizontal - Full Flow Cessation)"
             flapper_color = "#ef4444"
-            p_flow = "8.2 MPa (Catastrophic Downstream Collapse)"
+            p_flow = "8.2 MPa (Catastrophic Downstream Pressure Collapse)"
             t_flow = "109.8 °C (Thermal Dissipation Underway)"
-            acoustic_status = "Complete acoustic shock; water hammer transient peaked"
+            acoustic_status = "Full acoustic shock; water hammer transient peaked; SCADA trip breached"
             
         st.markdown(f"""
-            <div style="background:rgba(6,18,33,0.85); border:1px solid rgba(0,245,212,0.25); border-radius:14px; padding:1.2rem; font-family:'DM Mono';">
-                <div style="text-align:center; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:12px;">
-                    <span style="font-size:1.1rem; color:#f0f8ff; font-weight:700;">OFFSHORE DEEPWATER COMPLETION SCHEMATIC</span>
+            <div style="background:rgba(6,18,33,0.85); border:1px solid rgba(0,245,212,0.25); border-radius:14px; padding:1.2rem; font-family:'DM Mono'; margin-top:10px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:#94a3b8; font-size:0.8rem;">FLAPPER STATUS:</span>
+                    <span style="color:{flapper_color}; font-weight:700;">{flapper_angle}</span>
                 </div>
-                
-                <div style="background:rgba(0,187,249,0.1); border-left:4px solid #00bbf9; padding:8px 12px; margin-bottom:10px;">
-                    <div style="color:#38bdf8; font-weight:600;">0.0 m • SEA SURFACE</div>
-                    <div style="color:#94a3b8; font-size:0.8rem;">Floating Production Storage and Offloading (FPSO Topside)</div>
-                    <div style="color:#cbd5e1; font-size:0.75rem;">Surface Choke Valve (P-MON-CKP, T-JUS-CKP)</div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:#94a3b8; font-size:0.8rem;">P-TPT TELEMETRY:</span>
+                    <span style="color:#00f5d4; font-weight:700;">{p_flow}</span>
                 </div>
-                
-                <div style="text-align:center; color:#38bdf8; font-size:0.8rem; margin:6px 0;">
-                    ║ 2,180 METERS WATER COLUMN (SUBSEA RISER) ║
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:#94a3b8; font-size:0.8rem;">T-TPT TELEMETRY:</span>
+                    <span style="color:#00bbf9; font-weight:700;">{t_flow}</span>
                 </div>
-                
-                <div style="background:rgba(16,185,129,0.1); border-left:4px solid #10b981; padding:8px 12px; margin-bottom:10px;">
-                    <div style="color:#34d399; font-weight:600;">2,180 m • SEABED MUDLINE</div>
-                    <div style="color:#94a3b8; font-size:0.8rem;">Subsea Christmas Tree (XT) & Wellhead Master Valves</div>
-                </div>
-                
-                <div style="text-align:center; color:#34d399; font-size:0.8rem; margin:6px 0;">
-                    ║ 300 METERS BELOW MUDLINE (PRODUCTION TUBING) ║
-                </div>
-                
-                <div style="background:rgba(239,68,68,0.15); border-left:4px solid {flapper_color}; padding:10px 12px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="color:#f87171; font-weight:700;">2,480 m • DOWNHOLE SAFETY VALVE (DHSV)</span>
-                        <span style="color:{flapper_color}; font-weight:700;">FLAPPER: {flapper_angle}</span>
-                    </div>
-                    <div style="color:#cbd5e1; font-size:0.8rem; margin-top:4px;">
-                        🎯 <b>TARGET SENSORS (1 Hz):</b><br/>
-                        • Downhole Pressure Transducer (<code style="color:#00f5d4;">P-TPT</code>): <b>{p_flow}</b><br/>
-                        • Downhole Temperature Transducer (<code style="color:#00bbf9;">T-TPT</code>): <b>{t_flow}</b>
-                    </div>
-                </div>
-                
-                <div style="text-align:center; color:#a855f7; font-size:0.8rem; margin:6px 0;">
-                    ║ 2,500 METERS PRE-SALT RESERVOIR DEPTH ║
-                </div>
-                
-                <div style="background:rgba(168,85,247,0.1); border-left:4px solid #a855f7; padding:8px 12px;">
-                    <div style="color:#c084fc; font-weight:600;">5,000+ m • PRE-SALT RESERVOIR FORMATION</div>
-                    <div style="color:#94a3b8; font-size:0.8rem;">High Pressure, High Temperature (HPHT) Hydrocarbon Drive</div>
+                <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:8px; margin-top:8px;">
+                    <span style="color:#cbd5e1; font-size:0.8rem;"><b>ACOUSTIC DYNAMICS:</b><br/>{acoustic_status}</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
         
-    with col_physics:
-        st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
-        st.markdown("### ⚡ Physical Mechanism: Acoustic vs Thermal Inertia")
-        
+        st.markdown("#### Physical Lesson: Thermal Inertia Lag")
         st.markdown("""
-            #### 1. Acoustic Pressure Wave Speed ($c \approx 1,000\text{ m/s}$)
-            When the DHSV flapper starts to flutter, the hydrodynamic restriction creates an immediate acoustic pressure wave that 
-            propagates along the fluid column at approximately $1,000\text{ m/s}$. It reaches the `P-TPT` sensor in **milliseconds**, 
-            producing a clear autoregressive forecast departure:
-            $$r_P(t) = P(t) - \hat{P}(t)$$
-            
-            #### 2. Downhole Fluid Thermal Inertia Lag
-            Downhole multiphase hydrocarbons possess significant thermal capacity ($C_p$). Heat dissipation through thick steel tubing 
-            and heavy production casing is governed by transient thermal conduction:
-            $$\\rho C_p \\frac{\\partial T}{\\partial t} = k \\nabla^2 T$$
-            As a result, downhole fluid temperature (`T-TPT`) changes **much more slowly** than acoustic pressure.
-            
-            #### 3. Why Dynamic SARIMAX Beats Post-Hoc Fusion ($w=0.7$)
-            In **SARIMAX**, temperature dynamically conditions baseline expectations in the autoregressive state equation:
-            $$\\hat{P}_t = \\mu + \\phi P_{t-1} + \\beta T_{t-1}$$
-            Temperature conditions the expected baseline *without* diluting the fast-moving pressure residual.
-            
-            In post-hoc algebraic fusion ($S_t = \\sqrt{w z_P^2 + (1-w) z_T^2}$), when $w=0.7$, a near-zero temperature departure 
-            ($z_T \\approx 0$) algebraically **pulls down** the composite score, causing the system to miss early warning on marginal events!
+            - Acoustic pressure waves propagate at **$c \approx 1,000\text{ m/s}$**, registering in milliseconds at `P-TPT`.
+            - In contrast, fluid temperature changes **gradually** because of high fluid thermal capacity ($C_p$).
+            - **Scientific Takeaway:** Dynamic regression inside **SARIMAX** ($\hat{P}_t = \mu + \phi P_{t-1} + \beta T_{t-1}$) 
+            handles thermal lag gracefully. Post-hoc algebraic fusion ($w=0.7$) dilutes early pressure departures.
         """)
-        st.info("🔬 **Engineering Insight:** Dynamic regression inside the state equation respects physics far better than combining post-hoc residuals.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
@@ -911,7 +920,6 @@ elif selected_nav == "⚖️ OILGUARD-AC Studio & Budget Tuner":
         incip_zt = np.random.normal(1.8, 0.8, n_incipient)
         
         # Build ellipse boundary: w * zP^2 + (1-w) * zT^2 = tau^2
-        # => (zP / (tau / sqrt(w)))^2 + (zT / (tau / sqrt(1-w)))^2 = 1
         theta = np.linspace(0, 2*np.pi, 200)
         a = tau_val / np.sqrt(max(weight_w, 0.01))
         b = tau_val / np.sqrt(max(1.0 - weight_w, 0.01))
@@ -976,7 +984,6 @@ elif selected_nav == "📊 5-Stage Research Chronology":
         st.caption("Target Budget: Realized FAR ≤ 1.0 FA / normal hour (Total normal holdout duration = 3.978 hours)")
         
         if matched_df is not None:
-            # Model Name display mapper
             name_map = {
                 "sarimax": "SARIMAX (Exogenous T)",
                 "ac_0.85": "OILGUARD-AC (w=0.85)",
