@@ -49,9 +49,9 @@ We implemented LOF on the exact same 19 authentic events. The result was a drama
 - **Forecasting Models (ARIMA, SARIMAX):** Successfully bounded false alarms to **0.25 to 0.50 / hr** (only 1 to 2 false alarms across all 19 events).
 
 ### The Root Cause: Cross-Well Density Drift
-LOF measures local k-nearest neighbor density in raw feature space $[P, T]$. But across the 19 authentic production wells, normal baseline operating pressure varies from **8.9 MPa to 21.0 MPa** due to different reservoir depths and depletion stages!
+LOF measures local k-nearest neighbor density in raw feature space $[P, T]$. But across the 19 authentic events from 5 distinct physical offshore wells, normal baseline operating pressure varies from **8.9 MPa to 21.0 MPa** due to different reservoir depths and depletion stages (`WELL-00011` accounts for 12 of the 19 events).
 
-When deployed on an unseen well, normal operating points fall into low-density regions relative to the calibration wells, triggering constant nuisance alarms. In contrast, time-series forecasting models operate on **differenced residuals** ($d \in \{0, 1\}$), providing intrinsic scale-invariance and drift adaptability.
+When deployed on an unseen well, normal operating points fall into low-density regions relative to the calibration wells, triggering constant nuisance alarms. In contrast, time-series forecasting models difference out static level shifts, though residuals remain subject to sensor scale and operational drift.
 
 ---
 
@@ -67,12 +67,14 @@ Selecting the maximum calibration score guarantees zero false alarms during cali
 
 ---
 
-## What 5 Minutes Enables in Offshore Operations
+## What 4 to 5 Minutes of Observed Lead Time Means for Research & Operations
 
-In offshore drilling and production, 4 to 5 minutes of advance lead time provides:
-1. **Automated Choke Maneuvering:** Supervisory systems can initiate a controlled surface choke ramp-down, decelerating fluid velocity before the flapper fully seals.
-2. **Surge Mitigation Potential:** Smoothly decelerating the fluid column is hypothesized to attenuate pressure surges and mitigate water-hammer shockwaves that compromise subsea manifolds. (Note: physical validation requires multiphase transient dynamic simulation such as OLGA and field pilots).
-3. **Control Room Decision Support:** Operators have a clear, false-alarm-controlled alert allowing them to verify hydraulic telemetry before an uncommanded emergency platform trip occurs.
+Across the detected events, statistical forecasting models provided an observed mean lead time of approximately **4 to 5 minutes** prior to transient onset (SARIMAX: 4.8 min mean, 4.8 min median; ARIMA: 5.2 min mean, 5.2 min median; OILGUARD-AC $w=0.5$: 4.0 min mean, 3.2 min median).
+
+In offshore drilling and production, this advance lead time creates:
+1. **Control Room Decision Support:** Operators receive an advance alert to verify hydraulic telemetry and cross-check downhole pressure before the valve fully seals.
+2. **Actionable Diagnostic Window:** Provides a critical window to investigate whether the event is an intentional shutdown command, sensor drift, or an uncommanded flapper drift.
+3. **Hypothesized Choke Maneuvering:** In theory, advance warning could allow supervisory control to initiate a surface choke ramp-down. However, we explicitly emphasize that this retrospective experimental result does not prove operational safety or water-hammer prevention; transient multiphase hydrodynamic simulation (e.g., OLGA) and physical flow-loop testing remain essential future work before field commissioning.
 
 By moving beyond post-hoc threshold tuning and enforcing strict operational false-alarm budgets, this audit establishes that classical time series analysis provides reliable, scientifically grounded early warning intelligence for offshore energy infrastructure.
 

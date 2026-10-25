@@ -53,58 +53,67 @@ Statistical time-series models deliver nearly half the forecasting error of the 
 
 ---
 
-## 4. Evaluation Protocols & Metric Definitions
+## 4. Evaluation Protocols & Cohort Structure
 
-To ensure scientific rigor, we define and evaluate two distinct operational deployment protocols:
+To ensure scientific rigor, we audit the evaluation unit across the **19 authentic events** representing **5 distinct physical offshore wells**:
+- `WELL-00011`: 12 events (63.2% of cohort)
+- `WELL-00003`: 3 events (15.8% of cohort)
+- `WELL-00012`: 2 events (10.5% of cohort)
+- `WELL-00009`: 1 event (5.3% of cohort)
+- `WELL-00013`: 1 event (5.3% of cohort)
 
+Three operational protocols are evaluated:
 1. **Protocol 1: Prospective Within-Event Split Evaluation (Well-Specific Baseline Calibration)**
    - Chronological partition per event: 60% Train (model fit), 20% Calibration (noise scale and threshold $\tau_k$), 20% Holdout Normal + Transient (prospective monitoring).
-   - Reflects the industrial scenario where each well has its own baseline calibration split before deployment.
-2. **Protocol 2: Genuine Cross-Well Leave-One-Event-Out (LOEO-CV) (Pooled Training Calibration)**
+   - Reflects the industrial scenario where historical telemetry from the specific well is available to establish baseline thresholds before prospective monitoring begins.
+2. **Protocol 2: Genuine Cross-Event Leave-One-Event-Out (LOEO-CV) (Pooled Training Calibration)**
    - In fold $k$, event $k$ is completely held out.
-   - Threshold $\tau^*$ is calibrated on pooled calibration data of the other 18 events.
-   - Applied blindly to event $k$ with zero threshold or persistence tuning on event $k$.
-   - Reflects the cold-start industrial scenario where a model is deployed on a newly drilled or uncalibrated well.
-3. **Audited Early Warning Window:** Strictly defined as $[T_{\text{transient}} - 10\text{ min}, T_{\text{transient}})$. Any alarm prior to this window is strictly cataloged as an ordinary operation false alarm and penalizes the False Alarm Rate (FAR / hr).
+   - Threshold $\tau^*$ is calibrated on pooled calibration data of the other 18 events ($H_{\text{pool}} \approx 3.7\text{ hours}$).
+   - Evaluates generalization when deploying to an unseen event using pooled historical event data.
+3. **Protocol 3: Leave-One-Well-Out Cross-Validation (LOWO-CV) (Cross-Physical-Well Generalization)**
+   - In fold $w$, all events from physical well $w$ are completely held out from calibration.
+   - Evaluates generalization to an entirely uncalibrated well, preventing repeated events from `WELL-00011` from assisting calibration for that well.
+4. **Audited Early Warning Window:** Strictly defined as $[T_{\text{transient}} - 10\text{ min}, T_{\text{transient}})$. Any alarm prior to this window is strictly cataloged as an ordinary operation false alarm and penalizes the False Alarm Rate (FAR / hr). The total normal holdout duration across all 19 events is **3.978 hours**.
 
 ---
 
 ## 5. Matched-FAR Benchmark Comparison
 
-To eliminate the confounding effect of different false-alarm rates, models were compared under matched realized FAR levels ($\le 0.75\text{ alarms/hour}$) across both protocols:
+To eliminate the confounding effect of different false-alarm rates, models were compared under matched operational realized FAR settings ($\le 1.0\text{ alarms/hour}$, with primary benchmarking at $\le 0.75\text{ FA/hr}$):
 
-### Table 1: Matched Realized FAR Comparison Across Protocols ($N=19$)
+### Table 1: Matched Realized FAR Comparison Across Protocols ($N=19$ Events, 5 Wells)
 
-| Model / Method | Protocol 1: Within-Event (Well-Specific) | Protocol 1 Detection Rate [95% CI] | Protocol 1 Mean Lead Time | Protocol 1 Realized FAR | Protocol 2: Cross-Well (LOEO-CV) | Protocol 2 Detection Rate [95% CI] | Protocol 2 Mean Lead Time | Protocol 2 Realized FAR |
+| Model / Method | Protocol 1 Detection Rate | P1 Lead (Mean / Med) | P1 Realized FAR | Protocol 2 (LOEO) Detection [95% CI] | P2 Lead (Mean / Med) | P2 Realized FAR | Protocol 3 (LOWO) Detection | Realized Budget Met ($\le 1.0\text{ / hr}$)? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **SARIMAX (Exogenous T)** | $q=0.975, p=2$ | 36.8% [15.8%, 57.9%] | 4.00 min | 0.25 / hr | $q=0.90, p=2$ | **63.2%** [42.1%, 84.2%] | **4.83 min** | **0.50 / hr** |
-| **OILGUARD-AC ($w=0.5$)** | $q=0.95, p=2$ | **68.4%** [47.4%, 89.5%] | **4.21 min** | **0.75 / hr** | $q=0.95, p=2$ | **63.2%** [42.1%, 84.2%] | **4.01 min** | **0.50 / hr** |
-| **OILGUARD-AC ($w=0.7$)** | $q=0.90, p=3$ | 57.9% [36.8%, 78.9%] | 2.79 min | 0.75 / hr | $q=0.90, p=2$ | 52.6% [31.6%, 78.9%] | 4.67 min | 0.75 / hr |
-| **Univariate ARIMA** | $q=0.975, p=2$ | 31.6% [10.5%, 52.6%] | 2.47 min | 0.25 / hr | $q=0.90, p=2$ | **57.9%** [36.8%, 78.9%] | **5.18 min** | **0.50 / hr** |
-| **Naive Persistence** | $q=0.99, p=2$ | 42.1% [21.1%, 63.2%] | 3.31 min | 0.75 / hr | $q=0.90, p=3$ | 42.1% [21.1%, 63.2%] | 3.46 min | 0.50 / hr |
-| **Local Outlier Factor (LOF)** | $q=0.99, p=3$ | 57.9% [36.8%, 78.9%] | 4.61 min | 1.51 / hr (Violates $\le 1.0$) | $q=0.99, p=3$ | 57.9% [36.8%, 78.9%] | 4.48 min | 1.51 / hr (Violates $\le 1.0$) |
+| **SARIMAX (Exogenous T)** | 36.8% (7/19) | 4.0 / 4.3 min | 0.25 / hr | **63.2% (12/19)** [42.1%, 84.2%] | **4.8 / 4.8 min** | **0.50 / hr** (2 FA) | **73.7% (14/19)** | **YES** |
+| **OILGUARD-AC ($w=0.85$)** | 47.4% (9/19) | 3.3 / 3.5 min | 0.50 / hr | **63.2% (12/19)** [42.1%, 84.2%] | **5.3 / 5.4 min** | **0.50 / hr** (2 FA) | **73.7% (14/19)** | **YES** |
+| **OILGUARD-AC ($w=0.5$)** | **68.4% (13/19)** | **4.2 / 4.3 min** | **0.75 / hr** | **63.2% (12/19)** [42.1%, 84.2%] | **4.0 / 3.2 min** | **0.50 / hr** (2 FA) | **63.2% (12/19)** | **YES** |
+| **Univariate ARIMA** | 31.6% (6/19) | 2.5 / 1.5 min | 0.25 / hr | **57.9% (11/19)** [36.8%, 78.9%] | **5.2 / 5.2 min** | **0.50 / hr** (2 FA) | **68.4% (13/19)** | **YES** |
+| **OILGUARD-AC ($w=0.7$)** | 57.9% (11/19) | 2.8 / 2.5 min | 0.75 / hr | 52.6% (10/19) [31.6%, 73.7%] | 4.7 / 4.4 min | 0.75 / hr (3 FA) | 63.2% (12/19) | **YES** |
+| **Naive Persistence** | 47.4% (9/19) | 4.5 / 4.5 min | 1.01 / hr | 47.4% (9/19) [26.3%, 68.4%] | 2.3 / 2.2 min | 1.01 / hr (4 FA) | 57.9% (11/19) | Borderline |
+| **Local Outlier Factor (LOF)** | 57.9% (11/19) | 4.6 / 4.8 min | **1.51 / hr** | 57.9% (11/19) [36.8%, 78.9%] | 4.5 / 4.8 min | **1.51 / hr** (6 FA) | 57.9% (11/19) | **NO (Exceeds Budget!)** |
 
 ---
 
 ## 6. Scientific Discussion & Root-Cause Analysis
 
 ### 1. Dynamic Regression vs. Post-Hoc Heuristic Fusion
-A critical question investigated is whether post-hoc residual combination ($S_t = \sqrt{w z_P^2 + (1-w) z_T^2}$) improves on univariate forecasting or dynamic regression (SARIMAX).
-- **In Protocol 2 (Cross-Well LOEO-CV):** SARIMAX achieves **63.2% detection** with **4.83 min** lead time, matching balanced OILGUARD-AC ($w=0.5$, 63.2%, 4.01 min) and outperforming $w=0.7$ (52.6%, 4.67 min).
-- **Physical Reason:** Downhole temperature changes more slowly than pressure due to fluid thermal inertia. In SARIMAX, lag-1 temperature is an input to the autoregressive forecast equation ($\hat{y}_t = \phi y_{t-1} + \beta X_{t-1}$), conditioning the dynamic expectation before the residual is computed. In post-hoc algebraic fusion, sluggish temperature deviations can dilute the sharp pressure onset signal.
+A critical research question is whether post-hoc residual combination ($S_t = \sqrt{w z_P^2 + (1-w) z_T^2}$) outperforms univariate forecasting or dynamic regression (SARIMAX).
+- **In Cross-Event LOEO-CV (Protocol 2):** SARIMAX achieves **63.2% detection** (12/19) with **4.8 min mean (4.8 min median)** lead time, matching balanced OILGUARD-AC ($w=0.5$: 63.2%, 4.0 min mean, 3.2 min median) and outperforming $w=0.7$ (52.6%, 4.7 min mean, 4.4 min median).
+- **Physical Mechanism:** Downhole fluid possesses thermal inertia; fluid temperature changes more gradually than acoustic pressure drop during incipient valve throttling. In SARIMAX, temperature enters the autoregressive forecast equation directly, conditioning dynamic expectations before computing residuals. In post-hoc algebraic fusion, sluggish temperature deviations can dilute early acoustic pressure departures.
 
 ### 2. Failure of Density-Based Non-Forecasting Detectors (LOF)
 In the 3W literature (e.g. Fernandes et al., 2023), Local Outlier Factor (LOF) was reported as the top-performing detector based on retrospective window classification F1-scores.
-- **Our Audited Empirical Finding:** In prospective early warning, LOF fails operational false-alarm constraints. Even with heavy persistence ($p=3$) and high quantile thresholds ($q=0.99$), LOF generates **1.51 to 2.01 false alarms per hour** on unseen holdout wells, violating operational budgets by 2×.
-- **Why?** LOF measures k-NN density in raw feature space $[P, T]$. Because baseline operating pressure varies from 8.9 to 21.0 MPa across wells, normal holdout telemetry falls into low-density regions relative to calibration sets, generating frequent false alarms. In contrast, time-series forecasting models differenced residuals ($d \in \{0, 1\}$), providing intrinsic scale-invariance and drift adaptability.
+- **Our Audited Empirical Finding:** In prospective early warning, LOF fails operational false-alarm constraints. Even with heavy persistence ($p=3$) and high quantile thresholds ($q=0.99$), LOF generates **1.51 false alarms per hour** on unseen holdout wells, exceeding the operational budget.
+- **Why?** LOF measures k-NN density in raw feature space $[P, T]$. Because baseline operating pressure varies from 8.9 to 21.0 MPa across the 5 physical wells, normal holdout telemetry falls into low-density regions relative to calibration sets, generating frequent false alarms. In contrast, time-series forecasting models difference out static level shifts, though residuals remain subject to variance changes and operational drift.
 
 ### 3. Calibration Budget Transfer Divergence
-Because individual event calibration segments in 3W are short ($H_{\text{calib}} < 0.5\text{ h}$), requiring $\text{FAR}_{\text{calib}} \le 1.0$ forces allowable false alarms to be $K = \lfloor 1.0 \times 0.2 \rfloor = 0$. Calibrating on a short normal window does *not* guarantee that holdout FAR will remain below budget when deployed over longer periods. Realized holdout FAR must always be reported separately from calibration FAR.
+Because individual event calibration segments in 3W are short ($H_{\text{calib}} < 0.5\text{ h}$), requiring $\text{FAR}_{\text{calib}} \le 1.0$ forces allowable false alarms to be $K = \lfloor 1.0 \times 0.2 \rfloor = 0$. Calibrating on a short normal window does not guarantee that holdout FAR will remain below budget when deployed over longer periods. Realized holdout FAR must always be reported separately from calibration FAR.
 
 ---
 
 ## 7. Operational Scope & Engineering Limitations
 
-1. **Advance Window Value:** An advance warning of 4 to 5 minutes provides offshore control operators a critical decision window to verify hydraulic pressure telemetry and consider manual choke throttling before the valve flapper fully seals.
-2. **Qualified Engineering Claims:** Assertions regarding water hammer elimination or specific percentage surge reductions remain engineering hypotheses that require transient multiphase dynamic simulation (e.g., Schlumberger OLGA) and physical flow loop validation prior to live SCADA deployment.
-3. **Small Sample Uncertainty:** Although 19 real-world events represent one of the largest authentic DHSV closure cohorts published, the 95% bootstrap confidence intervals (e.g., [42.1%, 84.2%] for SARIMAX) reflect inherent statistical uncertainty.
+1. **Observed Experimental Lead Time:** Detected events showed an observed mean lead time of approximately 4 to 5 minutes under the experimental definition. This creates an actionable operational window for diagnostic assessment and control-room verification. We explicitly do not claim that this retrospective lead time proves sufficient time for safe automated intervention, closed-loop choke adjustments, or water hammer prevention.
+2. **Future Dynamic Simulation:** Assertions regarding hydraulic transient mitigation or water hammer suppression remain hypotheses that require rigorous multiphase dynamic simulation (e.g., Schlumberger OLGA) and physical flow-loop testing prior to any live SCADA deployment.
+3. **Small Sample Uncertainty:** Although 19 real-world events across 5 physical wells represent one of the largest authentic DHSV closure cohorts published, the 95% bootstrap confidence intervals (e.g., [42.1%, 84.2%] for SARIMAX) reflect inherent statistical uncertainty ($N=19$, where 1 event corresponds to $\approx 5.3\%$).

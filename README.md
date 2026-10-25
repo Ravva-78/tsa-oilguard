@@ -35,22 +35,23 @@ Evaluated across 19 authentic real-world offshore shut-in events:
 | **SARIMAX (+T-TPT)** | **0.0162** | **0.0523** | **8.63%** | **0.9994** | +0.0074 | **47.4% Lower MAE** |
 | **Naive Baseline** | 0.0307 | 0.0781 | 18.22% | 0.9988 | +0.0194 | Reference Baseline |
 
-### 2. Audited Matched-FAR Benchmark Comparison (N=19 Gold Events)
-To ensure a scientifically fair comparison without threshold bias, models were evaluated at a matched operational realized false-alarm rate ceiling ($\text{FAR} \le 0.75\text{ FA/hr}$):
+### 2. Audited Matched-FAR Benchmark Comparison ($N=19$ Gold Events across 5 Physical Wells)
+To ensure a scientifically fair comparison without threshold bias, models were evaluated across Protocol 1 (Within-Event), Protocol 2 (Cross-Event LOEO-CV, 19 Folds), and Protocol 3 (Cross-Physical-Well LOWO-CV, 5 Folds) under matched operational false-alarm settings ($\text{FAR} \le 1.0\text{ FA/hr}$):
 
-| Model / Method | Protocol 1 Config | P1 Early Detection | P1 Lead Time | P1 Realized FAR | Protocol 2 Config | P2 Early Detection | P2 Lead Time | P2 Realized FAR |
+| Model / Method | P1 Detection | P1 Lead (Mean / Med) | P1 Realized FAR | P2 (LOEO) Detection [95% CI] | P2 Lead (Mean / Med) | P2 Realized FAR | P3 (LOWO) Detection | Meets Operational Budget? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **SARIMAX (exog T)** | $q=0.975, p=2$ | 36.8% (7/19) | 4.00 min | 0.25 / hr | $q=0.90, p=2$ | **63.2% (12/19)** | **4.83 min** | **0.50 / hr** |
-| **OILGUARD-AC ($w=0.5$)** | $q=0.95, p=2$ | **68.4% (13/19)** | **4.21 min** | **0.75 / hr** | $q=0.95, p=2$ | **63.2% (12/19)** | **4.01 min** | **0.50 / hr** |
-| **OILGUARD-AC ($w=0.7$)** | $q=0.90, p=3$ | 57.9% (11/19) | 2.79 min | 0.75 / hr | $q=0.90, p=2$ | 52.6% (10/19) | 4.67 min | 0.75 / hr |
-| **Univariate ARIMA** | $q=0.975, p=2$ | 31.6% (6/19) | 2.47 min | 0.25 / hr | $q=0.90, p=2$ | 57.9% (11/19) | 5.18 min | 0.50 / hr |
-| **Naive Baseline** | $q=0.99, p=2$ | 42.1% (8/19) | 3.31 min | 0.75 / hr | $q=0.90, p=3$ | 42.1% (8/19) | 3.46 min | 0.50 / hr |
-| **Local Outlier Factor (LOF)** | $q=0.99, p=3$ | 57.9% (11/19) | 4.61 min | **1.51 / hr** | $q=0.99, p=3$ | 57.9% (11/19) | 4.48 min | **1.51 / hr (Violates Budget!)** |
+| **SARIMAX (exog T)** | 36.8% (7/19) | 4.0 / 4.3 min | 0.25 / hr | **63.2% (12/19)** [42.1%, 84.2%] | **4.8 / 4.8 min** | **0.50 / hr** (2 FA) | **73.7% (14/19)** | **YES** ($\le 1.0$) |
+| **OILGUARD-AC ($w=0.85$)** | 47.4% (9/19) | 3.3 / 3.5 min | 0.50 / hr | **63.2% (12/19)** [42.1%, 84.2%] | **5.3 / 5.4 min** | **0.50 / hr** (2 FA) | **73.7% (14/19)** | **YES** ($\le 1.0$) |
+| **OILGUARD-AC ($w=0.5$)** | **68.4% (13/19)** | **4.2 / 4.3 min** | **0.75 / hr** | **63.2% (12/19)** [42.1%, 84.2%] | **4.0 / 3.2 min** | **0.50 / hr** (2 FA) | **63.2% (12/19)** | **YES** ($\le 1.0$) |
+| **Univariate ARIMA** | 31.6% (6/19) | 2.5 / 1.5 min | 0.25 / hr | **57.9% (11/19)** [36.8%, 78.9%] | **5.2 / 5.2 min** | **0.50 / hr** (2 FA) | **68.4% (13/19)** | **YES** ($\le 1.0$) |
+| **OILGUARD-AC ($w=0.7$)** | 57.9% (11/19) | 2.8 / 2.5 min | 0.75 / hr | 52.6% (10/19) [31.6%, 73.7%] | 4.7 / 4.4 min | 0.75 / hr (3 FA) | 63.2% (12/19) | **YES** ($\le 1.0$) |
+| **Naive Baseline** | 47.4% (9/19) | 4.5 / 4.5 min | 1.01 / hr | 47.4% (9/19) [26.3%, 68.4%] | 2.3 / 2.2 min | 1.01 / hr (4 FA) | 57.9% (11/19) | Borderline |
+| **Local Outlier Factor (LOF)** | 57.9% (11/19) | 4.6 / 4.8 min | **1.51 / hr** | 57.9% (11/19) [36.8%, 78.9%] | 4.5 / 4.8 min | **1.51 / hr** (6 FA) | 57.9% (11/19) | **NO (Exceeds Budget!)** |
 
 ### Key Scientific Lessons
-1. **Dynamic Conditioning vs. Post-Hoc Fusion:** In cross-well LOEO-CV, SARIMAX (exogenous temperature) matches or outperforms post-hoc composite scoring ($w=0.7$). Due to thermal inertia, downhole temperature changes lag acoustic pressure drops by 60–120 seconds during incipient valve throttling. Conditioning pressure forecasts directly on temperature dynamics provides superior early warning.
-2. **Failure of Non-Forecasting Density Baselines:** LOF achieves 57.9% detection but incurs 1.51 false alarms/hr (violating the 1.0/hr budget). Because baseline pressure varies across wells from 8.9 to 21.0 MPa, raw distance metrics mistake inter-well variance for anomalies.
-3. **Calibration FAR vs. Realized Holdout FAR:** Calibrating on short event-specific slices ($<0.5\text{ h}$) leads to budget collapse ($K_{\text{allowed}} = 0$). Pooling 18 training wells in Protocol 2 creates a stable calibration baseline.
+1. **Dynamic Conditioning vs. Post-Hoc Fusion:** In cross-event LOEO-CV, SARIMAX (exogenous temperature) matches or outperforms post-hoc composite scoring ($w=0.7$). Due to thermal inertia, downhole temperature changes lag acoustic pressure drops by 60–120 seconds during incipient valve throttling. Conditioning pressure forecasts directly on temperature dynamics provides superior early warning.
+2. **Failure of Non-Forecasting Density Baselines:** LOF achieves 57.9% detection but incurs 1.51 false alarms/hr (violating the 1.0/hr budget). Because baseline pressure varies across the 5 physical wells from 8.9 to 21.0 MPa, raw distance metrics mistake inter-well variance for anomalies. Time-series forecasting models difference out static level shifts, though residuals remain subject to sensor scale and operational drift.
+3. **Cohort Structure & LOWO Generalization:** The 19 authentic events come from 5 physical offshore wells (`WELL-00011` constitutes 12 of 19 events = 63.2%). Under Leave-One-Well-Out CV (Protocol 3), SARIMAX and heavy-pressure OILGUARD-AC ($w=0.85$) both maintain strong cross-well early warning (73.7% detection, 14/19 events).
 4. **Qualified Operational Lead Time:** The observed 4 to 5 minutes of early warning provides an actionable diagnostic window for control-room operators. Validation in high-fidelity multiphase transient simulators (e.g. OLGA) is recommended before field commissioning.
 
 ---
