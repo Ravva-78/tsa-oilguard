@@ -1,8 +1,9 @@
-# Research Gap and Novelty Statement: OILGUARD-AC
+# Research Gap and Novelty Statement: OILGUARD-AC (Audited v2)
 
 **Project:** OILGUARD — Forecasting-Based Early Warning of Abnormal Events in Oil Wells  
-**Proposed Method:** OILGUARD-AC (Alarm-Constrained, Multisensor Early Warning)  
-**Date:** October 2026  
+**Target Event:** Class 2 — Spurious Closure of Downhole Safety Valve (DHSV)  
+**Dataset:** Petrobras 3W Benchmark v2.0.0 (Authentic Well Instances, N=19)  
+**Date:** October 2026 (Audited v2)  
 
 ---
 
@@ -17,64 +18,58 @@ Recent research on the Petrobras 3W benchmark has applied machine learning algor
 
 ---
 
-## 2. The Research Question
+## 2. The Core Research Question
 
 > **Primary Research Question:**  
-> *Can calibrated, multisensor forecasting residuals improve early detection of spurious DHSV closure while meeting a predefined false-alarm budget on unseen real-world events?*
+> *Can multisensor forecasting residuals improve prospective early warning of spurious DHSV closure while respecting a predefined false-alarm budget on unseen real-world events?*
 
 ### Sub-Questions:
 1. Does combining pressure forecast residuals with downhole temperature deviation evidence provide earlier or more reliable anomaly detection than univariate pressure forecasting?
-2. Does calibrating detection thresholds under an explicit false-alarm constraint ($B_{\text{FAR}} \le 1.0\text{ or } 2.0\text{ alarms/hour}$) on training/calibration data successfully control false alarm rates on unseen holdout well events?
-3. How does forecasting-based residual anomaly detection compare against established non-forecasting anomaly detectors (specifically Local Outlier Factor, identified by Fernandes et al., 2023 as the top performer on 3W)?
+2. How does dynamic exogenous integration in the forecasting equation (SARIMAX with lag-1 temperature) compare against post-hoc heuristic composite scoring (OILGUARD-AC)?
+3. Does calibrating detection thresholds under an explicit false-alarm constraint on training data successfully bound false alarm rates on unseen holdout well events?
+4. How do forecasting-based residual anomaly detectors compare against established non-forecasting density baselines (Local Outlier Factor, LOF) when both are subject to the same operational false-alarm constraints?
 
 ---
 
-## 3. The Proposed Technical Contribution: OILGUARD-AC
+## 3. Evaluation Protocol Definitions: Resolving Methodological Ambiguity
 
-We propose **OILGUARD-AC (Alarm-Constrained, Multisensor Early Warning for Spurious DHSV Closure)** consisting of three core technical mechanisms:
+To prevent conflating within-event time splits with cross-well generalization, this research explicitly defines and evaluates two distinct protocols:
 
-### Contribution 1: Multisensor Residual Coupling Score
-Rather than monitoring univariate raw residual $e_P(t) = y_P(t) - \hat{y}_P(t)$ alone:
-1. We compute normalized pressure residual:
-   $$z_{P, t} = \frac{|e_{P, t}|}{\hat{\sigma}_{\text{calib}, P}}$$
-2. We compute normalized temperature deviation from rolling calibration baseline:
-   $$z_{T, t} = \frac{|T_t - \mu_{\text{calib}, T}|}{\hat{\sigma}_{\text{calib}, T}}$$
-3. We compute a composite thermodynamic anomaly score:
-   $$S_t = \sqrt{w_P z_{P, t}^2 + (1 - w_P) z_{T, t}^2}$$
-   where $w_P \in [0.5, 1.0]$ balances pressure dominance with thermal corroboration.
+### Protocol 1: Prospective Within-Event Split Evaluation (Well-Specific Baseline)
+- **Industrial Context:** Each physical oil well has a unique operating baseline (reservoir pressure varies from 8.9 to 21.0 MPa across the 19 wells). An operator deploys a detector by establishing a well-specific baseline on historical normal telemetry before prospective monitoring begins.
+- **Data Partition:** 60% Train (model fit), 20% Calibration (noise scale and threshold $\tau_k$), 20% Holdout Normal + Transient (prospective monitoring).
+- **Threshold Calibration:** Threshold $\tau_k(q)$ is calibrated on event $k$'s own calibration split.
 
-### Contribution 2: False-Alarm-Budgeted Threshold Calibration
-Given an operational nuisance-alarm budget $B_{\text{FAR}}$ (e.g., $B \le 1.0\text{ FA/hr}$ or $B \le 2.0\text{ FA/hr}$):
-- Threshold $\tau$ is calibrated strictly on normal operating data such that:
-  $$\text{FAR}_{\text{calib}}(\tau) \le B_{\text{FAR}}$$
-- This replaces arbitrary percentile selection ($q=0.99$ or post-hoc $q=0.95$) with an operationally motivated constraint.
-- The realized false alarm rate on holdout test data is evaluated to test calibration robustness.
-
-### Contribution 3: Leakage-Free Event-Level Validation (LOEO-CV) with Established Comparator
-- Evaluated strictly using Leave-One-Event-Out Cross-Validation (LOEO-CV) on all 19 authentic Class 2 events.
-- Benchmarked against:
-  1. Univariate ARIMA (pressure residual alone)
-  2. Univariate SARIMAX (pressure residual with temperature exog)
-  3. Naive Persistence Baseline
-  4. Non-forecasting benchmark: **Local Outlier Factor (LOF)** fitted on normal calibration windows.
+### Protocol 2: Genuine Cross-Well Leave-One-Event-Out (LOEO-CV) (Pooled Training Calibration)
+- **Industrial Context:** Cold-start deployment on an uncalibrated well where NO baseline calibration data exists for that well.
+- **Data Partition:** In fold $k$, event $k$ is completely held out.
+- **Threshold Calibration:** Standardized calibration residuals from the other 18 training events are pooled ($H_{\text{train\_calib}} \approx 3.7\text{ hours}$). Threshold $\tau^*(q)$ is calibrated on the pooled training cohort to satisfy the operational budget and applied blindly to event $k$. Event $k$ contributes ZERO data to threshold, persistence, or hyperparameter selection.
 
 ---
 
-## 4. What Is Novel vs. What Is Prior Art
+## 4. Key Empirical Findings & Novelty Assessment
 
-| Component | Status | Source / Prior Art |
-| :--- | :--- | :--- |
-| **ARIMA / SARIMAX Modeling** | Prior Art | Box-Jenkins (2015); standard time series literature. |
-| **Petrobras 3W Benchmark** | Prior Art | Vargas et al. (2019, 2026). |
-| **Local Outlier Factor (LOF)** | Prior Art | Breunig et al. (2000); applied to 3W by Fernandes et al. (2023). |
-| **Multisensor Bivariate Residual Score** | **Proposed Novelty** | Evaluates whether thermodynamic coupling between `P-TPT` and `T-TPT` provides earlier incipient warning than pressure residuals alone on authentic 3W data. |
-| **Alarm-Constrained Calibration Framework** | **Proposed Novelty** | Calibrating detection thresholds strictly under an explicit false-alarm rate budget ($B_{\text{FAR}}$) on training/calibration data, and evaluating realized FAR and lead times under LOEO-CV. |
+### Finding 1: Dynamic Exogenous Regression vs. Post-Hoc Residual Fusion
+- **Observation:** In genuine cross-well LOEO-CV (Protocol 2) under a strict operational false-alarm budget ($\le 0.50\text{ FA/hr}$):
+  - Dynamic Exogenous Regression (**SARIMAX**): **63.2% detection (12/19)**, **4.83 min mean lead time**, Realized FAR = **0.50 / hr** (2 FA total).
+  - Balanced Multisensor Score (**OILGUARD-AC $w=0.5$**): **63.2% detection (12/19)**, **4.01 min mean lead time**, Realized FAR = **0.50 / hr** (2 FA total).
+  - Heavy Pressure Score (**OILGUARD-AC $w=0.7$**): **52.6% detection (10/19)**, **4.67 min mean lead time**, Realized FAR = **0.75 / hr** (3 FA total).
+  - Univariate ARIMA: **57.9% detection (11/19)**, **5.18 min mean lead time**, Realized FAR = **0.50 / hr** (2 FA total).
+- **Physical Mechanism:** Downhole fluid has thermal inertia; fluid temperature changes more gradually than acoustic pressure drop during incipient valve throttling. Feeding temperature as a dynamic lag-1 exogenous regressor into SARIMAX conditions the autoregressive prediction with physical thermodynamic context *before* computing residuals. In contrast, post-hoc composite scoring $S_t = \sqrt{w z_P^2 + (1-w) z_T^2}$ can dilute the sharp pressure departure if temperature lags behind.
+
+### Finding 2: Failure of Density-Based Detectors (LOF) under Operational Budgets
+- In the literature (e.g. Fernandes et al., 2023), Local Outlier Factor (LOF) was hailed as the top-performing detector on 3W based on retrospective window classification F1-scores.
+- **Our Audited Empirical Finding:** In prospective early warning, LOF fails operational constraints. Even with heavy persistence ($p=3$) and high quantile thresholds ($q=0.99$), LOF produces **1.51 to 2.01 false alarms per hour** on unseen holdout wells, violating operational budgets by 2×.
+- **Why?** LOF measures k-NN density in raw $[P, T]$ space. Because baseline operating conditions vary across wells, normal holdout telemetry falls into low-density regions relative to calibration sets, generating frequent false alarms. In contrast, time-series forecasting models differenced residuals ($d \in \{0, 1\}$), providing intrinsic scale-invariance and drift adaptability.
+
+### Finding 3: Calibration FAR vs. Realized Holdout FAR Divergence
+- Because individual event calibration segments in 3W are short ($H_{\text{calib}} < 0.5\text{ h}$), setting a zero false-alarm constraint on calibration data does *not* guarantee that holdout FAR will remain below budget. Realized holdout FAR must always be reported separately from calibration FAR.
 
 ---
 
-## 5. Negative Finding & Scientific Honesty Policy
+## 5. Scope of Scientific Claims
 
-We explicitly commit to the following principles:
-- **No Cherry-Picking:** All metrics will be evaluated across the verified 19 gold events.
-- **Hypothesis Testing:** If OILGUARD-AC does *not* outperform univariate ARIMA or LOF under the same false-alarm constraints, we will report the negative finding with technical root-cause analysis (e.g., thermal sensor inertia vs acoustic pressure dynamics).
-- **No Unverifiable Claims:** We will not claim water hammer prevention or SCADA deployment readiness; all findings will be characterized as empirical observations on the Petrobras 3W benchmark.
+We do not claim that multisensor composite scoring is uniformly superior to univariate forecasting. Rather, the contribution is the **first rigorous, alarm-constrained evaluation framework on authentic Petrobras 3W Class 2 events**, establishing:
+1. That dynamic regression (SARIMAX) is scientifically more defensible than heuristic residual combination;
+2. That time-series forecasting models outperform non-forecasting density methods (LOF) by maintaining operational false-alarm constraints on unseen wells;
+3. That classical TSA provides 4 to 5 minutes of advance warning, creating an operational window for diagnostic assessment and manual choke throttling.

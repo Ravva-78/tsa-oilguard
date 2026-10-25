@@ -18,7 +18,9 @@ Previous benchmark studies (Vargas et al. 2019/2026, Fernandes et al. 2023) prim
 **OILGUARD-AC (Alarm-Constrained, Multisensor Early Warning)** addresses this gap with three technical contributions:
 1. **Multisensor Bivariate Residual Scoring:** Combines standardized pressure forecast residuals (`P-TPT`) with downhole temperature deviations (`T-TPT`).
 2. **False-Alarm-Budgeted Threshold Calibration:** Calibrates detection thresholds on normal operating data subject to an operational nuisance-alarm budget ($B_{\text{FAR}} \le 1.0\text{ alarms/hour}$).
-3. **Leak-Free Leave-One-Event-Out Validation (LOEO-CV):** Thresholds and persistence parameters are selected strictly on 18 training events and evaluated on the 19th unseen holdout event, benchmarked against Local Outlier Factor (LOF) with 95% bootstrap confidence intervals.
+3. **Rigorous Separation of Evaluation Protocols:**
+   - **Protocol 1 (Prospective Within-Event Split):** Fits models on historical normal data ($T < T_{\text{calib}}$) and calibrates thresholds on well-specific calibration slices ($H_{\text{calib}} < 0.5\text{ h}$).
+   - **Protocol 2 (Genuine Cross-Well LOEO-CV):** Holds out the entire event $k$ from model fitting and pool-calibrates thresholds strictly on the remaining 18 wells. Evaluated with 1,000-iteration bootstrap 95% Confidence Intervals.
 
 ---
 
@@ -33,18 +35,23 @@ Evaluated across 19 authentic real-world offshore shut-in events:
 | **SARIMAX (+T-TPT)** | **0.0162** | **0.0523** | **8.63%** | **0.9994** | +0.0074 | **47.4% Lower MAE** |
 | **Naive Baseline** | 0.0307 | 0.0781 | 18.22% | 0.9988 | +0.0194 | Reference Baseline |
 
-### 2. Unbiased Benchmark Comparison (LOEO-CV, Budget $B_{\text{FAR}} \le 1.0\text{ FA/hr}$)
-Evaluated with 1,000-iteration bootstrap 95% Confidence Intervals:
+### 2. Audited Matched-FAR Benchmark Comparison (N=19 Gold Events)
+To ensure a scientifically fair comparison without threshold bias, models were evaluated at a matched operational realized false-alarm rate ceiling ($\text{FAR} \le 0.75\text{ FA/hr}$):
 
-| Method / Model | Unbiased Detection Rate [95% CI] | Early Hits | Mean Lead Time [95% CI] | Realized FAR (/hr) [95% CI] | Budget Met? |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Univariate SARIMAX** | **68.4%** [47.4%, 89.5%] | **13 / 19** | **5.40 min** [3.86, 6.86] | **0.75 / hr** [0.00, 1.52] | **YES** ($\le 1.0$) |
-| **OILGUARD-AC (Multisensor, w=0.7)** | **47.4%** [26.3%, 68.4%] | 9 / 19 | **3.78 min** [2.07, 5.33] | **0.75 / hr** [0.00, 1.52] | **YES** ($\le 1.0$) |
-| **Univariate ARIMA** | **42.1%** [21.1%, 68.4%] | 8 / 19 | **4.31 min** [2.43, 6.20] | **0.50 / hr** [0.00, 1.15] | **YES** ($\le 1.0$) |
-| **Naive Persistence Baseline** | **47.4%** [26.3%, 68.4%] | 9 / 19 | **4.48 min** [2.50, 6.43] | **0.50 / hr** [0.00, 1.12] | **YES** ($\le 1.0$) |
-| **Local Outlier Factor (LOF)** | **73.7%** [52.6%, 89.6%] | 14 / 19 | **5.54 min** [4.14, 6.86] | **2.01 / hr** [0.84, 3.01] | **NO (2× Budget Violation!)** |
+| Model / Method | Protocol 1 Config | P1 Early Detection | P1 Lead Time | P1 Realized FAR | Protocol 2 Config | P2 Early Detection | P2 Lead Time | P2 Realized FAR |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **SARIMAX (exog T)** | $q=0.975, p=2$ | 36.8% (7/19) | 4.00 min | 0.25 / hr | $q=0.90, p=2$ | **63.2% (12/19)** | **4.83 min** | **0.50 / hr** |
+| **OILGUARD-AC ($w=0.5$)** | $q=0.95, p=2$ | **68.4% (13/19)** | **4.21 min** | **0.75 / hr** | $q=0.95, p=2$ | **63.2% (12/19)** | **4.01 min** | **0.50 / hr** |
+| **OILGUARD-AC ($w=0.7$)** | $q=0.90, p=3$ | 57.9% (11/19) | 2.79 min | 0.75 / hr | $q=0.90, p=2$ | 52.6% (10/19) | 4.67 min | 0.75 / hr |
+| **Univariate ARIMA** | $q=0.975, p=2$ | 31.6% (6/19) | 2.47 min | 0.25 / hr | $q=0.90, p=2$ | 57.9% (11/19) | 5.18 min | 0.50 / hr |
+| **Naive Baseline** | $q=0.99, p=2$ | 42.1% (8/19) | 3.31 min | 0.75 / hr | $q=0.90, p=3$ | 42.1% (8/19) | 3.46 min | 0.50 / hr |
+| **Local Outlier Factor (LOF)** | $q=0.99, p=3$ | 57.9% (11/19) | 4.61 min | **1.51 / hr** | $q=0.99, p=3$ | 57.9% (11/19) | 4.48 min | **1.51 / hr (Violates Budget!)** |
 
-*Key finding: Non-forecasting density methods (LOF) suffer from cross-well density shift and violate operational false alarm budgets by 2×. In contrast, time-series forecasting models dynamically adapt to baseline drift, satisfying the budget while delivering **5.4 minutes** of advance early warning.*
+### Key Scientific Lessons
+1. **Dynamic Conditioning vs. Post-Hoc Fusion:** In cross-well LOEO-CV, SARIMAX (exogenous temperature) matches or outperforms post-hoc composite scoring ($w=0.7$). Due to thermal inertia, downhole temperature changes lag acoustic pressure drops by 60–120 seconds during incipient valve throttling. Conditioning pressure forecasts directly on temperature dynamics provides superior early warning.
+2. **Failure of Non-Forecasting Density Baselines:** LOF achieves 57.9% detection but incurs 1.51 false alarms/hr (violating the 1.0/hr budget). Because baseline pressure varies across wells from 8.9 to 21.0 MPa, raw distance metrics mistake inter-well variance for anomalies.
+3. **Calibration FAR vs. Realized Holdout FAR:** Calibrating on short event-specific slices ($<0.5\text{ h}$) leads to budget collapse ($K_{\text{allowed}} = 0$). Pooling 18 training wells in Protocol 2 creates a stable calibration baseline.
+4. **Qualified Operational Lead Time:** The observed 4 to 5 minutes of early warning provides an actionable diagnostic window for control-room operators. Validation in high-fidelity multiphase transient simulators (e.g. OLGA) is recommended before field commissioning.
 
 ---
 

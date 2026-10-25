@@ -1,0 +1,7 @@
+Term,Definition
+Pre-Event Early Warning Window,"[T_transient - 10 min, T_transient). An alarm inside this window is classified as a valid early warning."
+Ordinary Operation False Alarm,An alarm triggering prior to the pre-event window (t < T_transient - 10 min). Directly contributes to False Alarm Rate (FAR / hr) and reduces warning precision.
+Advance Lead Time,T_transient - T_first_alarm exclusively for the first alarm occurring inside the pre-event window. Recorded in minutes.
+Protocol 1: Prospective Within-Event Split,"Chronological split per event: 60% Train (model fit), 20% Calibration (noise scale & threshold tau_k), 20% Holdout + Transient. Evaluates well-specific baseline tuning."
+Protocol 2: Genuine Cross-Well LOEO-CV,Event k is completely held out. Threshold tau* is calibrated on pooled calibration data of the other 18 events. Applied blindly to event k with ZERO tuning on event k.
+Normal Hours Denominator,Sum of eligible normal operating hours during the evaluation split prior to transient onset (sum = 3.978 hours across the 19 gold events).

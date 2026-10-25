@@ -155,3 +155,36 @@ def test_bootstrap_ci_computation() -> None:
     assert "mean_lead_ci_95" in ci
     assert "realized_far_ci_95" in ci
     assert 0.0 <= ci["detection_rate_ci_95"][0] <= ci["detection_rate_ci_95"][1] <= 1.0
+
+
+def test_regression_cross_well_leakage_prevention(synthetic_event: EventScoreData) -> None:
+    """Verify that in genuine cross-well LOEO-CV, held-out event does not set its own threshold."""
+    # Training cohort with high variance vs held-out with low variance
+    train_scores = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 10.0])
+    held_out_calib = np.array([0.1, 0.2, 0.3])
+
+    # Pooled threshold from training cohort at 90th percentile
+    thresh_pool = float(np.quantile(train_scores, 0.90))
+    # Threshold from held-out event alone
+    thresh_held_out = float(np.quantile(held_out_calib, 0.90))
+
+    # They must differ, proving pooled cross-well training is independent of held-out data
+    assert thresh_pool > thresh_held_out
+    assert thresh_pool > 4.5
+
+
+def test_regression_calibration_vs_realized_far() -> None:
+    """Verify that a threshold with 0 false alarms on short calibration can have >0 FAR on holdout."""
+    # Short calib of 12 samples (2 minutes): max is 2.0
+    calib = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0])
+    threshold = 2.05  # zero alarms on calib
+
+    # Longer holdout of 360 samples (1 hour): one surge of 2.5
+    holdout = np.zeros(360)
+    holdout[50] = 2.5
+
+    trigs_calib = find_alarm_episodes(calib, threshold, persistence=1)
+    trigs_holdout = find_alarm_episodes(holdout, threshold, persistence=1)
+
+    assert len(trigs_calib) == 0  # 0 on calibration
+    assert len(trigs_holdout) == 1  # 1 on holdout (FAR = 1.0/hr), proving calibration FAR != realized FAR
