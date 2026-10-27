@@ -661,17 +661,30 @@ with tab_stream:
         )
         
         # Playhead line
-        fig_telemetry.add_vline(x=current_timestamp, line_dash="solid", line_color="#ffffff", line_width=1.5, annotation_text="Playback Head")
+        fig_telemetry.add_vline(x=current_timestamp, line_dash="solid", line_color="#ffffff", line_width=1.5)
+        fig_telemetry.add_annotation(
+            x=current_timestamp, y=1.02, yref="paper",
+            text="Playback Head", showarrow=False,
+            font=dict(color="#ffffff", size=10),
+            bgcolor="rgba(15, 23, 42, 0.75)"
+        )
         
         # Transient marker
         if has_transient:
-            fig_telemetry.add_vline(x=t_transient, line_dash="dash", line_color="#ef4444", line_width=2, annotation_text="T_transient (Valve Shut)")
+            fig_telemetry.add_vline(x=t_transient, line_dash="dash", line_color="#ef4444", line_width=2)
+            fig_telemetry.add_annotation(
+                x=t_transient, y=1.02, yref="paper",
+                text="T_transient (Valve Shut)", showarrow=False,
+                font=dict(color="#ef4444", size=10),
+                bgcolor="rgba(15, 23, 42, 0.75)"
+            )
             ew_start = t_transient - pd.Timedelta(minutes=10)
             fig_telemetry.add_vrect(
                 x0=ew_start, x1=t_transient,
                 fillcolor="rgba(245, 158, 11, 0.18)",
                 layer="below", line_width=0,
                 annotation_text="Early Warning Window (10 min)",
+                annotation_position="top left",
                 row=1, col=1
             )
             

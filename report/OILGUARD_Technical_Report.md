@@ -331,15 +331,19 @@ The OILGUARD research project demonstrates that classical time-series forecastin
 All data, models, unit tests, and metrics are fully reproducible in the workspace environment:
 - **Run Unit & Regression Tests:**
   ```powershell
-  & "C:\Users\nan33\OneDrive\Desktop\TSA-OILGUARD\.venv\Scripts\python.exe" -m pytest tests/ -v
+  python -m pytest tests/ -v
   ```
 - **Execute Audited Evaluation Pipeline:**
   ```powershell
-  & "C:\Users\nan33\OneDrive\Desktop\TSA-OILGUARD\.venv\Scripts\python.exe" scripts/run_audited_v2_evaluation.py
+  python scripts/run_audited_v2_evaluation.py
   ```
 - **Generate Word Technical Report & PowerPoint Presentation:**
   ```powershell
-  & "C:\Users\nan33\OneDrive\Desktop\TSA-OILGUARD\.venv\Scripts\python.exe" scripts/build_report_and_slides.py
+  python scripts/build_report_and_slides.py
+  ```
+- **Launch Interactive Streamlit Dashboard:**
+  ```powershell
+  streamlit run app.py
   ```
 
 ---

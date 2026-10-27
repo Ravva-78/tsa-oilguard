@@ -21,7 +21,7 @@ import pandas as pd
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 
-PROJECT_ROOT = Path(r"C:\Users\nan33\OneDrive\Desktop\TSA-OILGUARD")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 V2_DIR = PROJECT_ROOT / "results" / "audited_v2"
 METRICS_DIR = V2_DIR / "metrics"
 FIGURES_DIR = V2_DIR / "figures"

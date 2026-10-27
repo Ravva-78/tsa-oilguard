@@ -145,7 +145,10 @@ def load_config(path: str | Path | None = None) -> ExperimentConfig:
     if any(v <= 0 for v in preprocessing.split):
         raise ValueError("preprocessing.split values must be positive")
     if not dataset_root.exists():
-        raise FileNotFoundError(f"Dataset root not found: {dataset_root}")
+        if data_dir.exists():
+            dataset_root = data_dir
+        else:
+            raise FileNotFoundError(f"Dataset root not found: {dataset_root}")
 
     config = ExperimentConfig(
         dataset_root=dataset_root,

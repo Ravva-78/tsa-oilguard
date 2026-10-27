@@ -21,7 +21,7 @@ from pptx.enum.text import PP_ALIGN
 
 import pandas as pd
 
-PROJECT_ROOT = Path(r"C:\Users\nan33\OneDrive\Desktop\TSA-OILGUARD")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REPORT_DIR = PROJECT_ROOT / "report"
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
 FIGURES_DIR = PROJECT_ROOT / "results" / "audited_v2" / "figures"
