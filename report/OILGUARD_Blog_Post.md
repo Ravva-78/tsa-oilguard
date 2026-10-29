@@ -1,6 +1,6 @@
 # Guarding Offshore Wells: When Adding a Second Sensor Is Harder Than It Looks (OILGUARD Audited v2)
 
-*By the OILGUARD Research Team*  
+*By Ravva Nagarjun & Naveen Kumar N (B.M.S. College of Engineering)*  
 *Estimated reading time: 6 minutes (~1,080 words)*
 
 ---

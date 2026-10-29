@@ -1032,6 +1032,6 @@ st.markdown("---")
 st.markdown("""
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; font-size:0.75rem; color:#64748b; font-family:'DM Mono';">
         <div>OILGUARD • SEASHORE TO SUBSEA INTELLIGENCE • PETROBRAS 3W BENCHMARK</div>
-        <div>ANTIGRAVITY RESEARCH TEAM • AUDITED RECONCILED RELEASE</div>
+        <div>RAVVA NAGARJUN & NAVEEN KUMAR N • B.M.S. COLLEGE OF ENGINEERING</div>
     </div>
 """, unsafe_allow_html=True)

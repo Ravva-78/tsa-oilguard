@@ -37,3 +37,7 @@ data/raw/
 *3w_dataset*
 *.csv.gz
 
+
+# Temporary Office lock files
+~$*
+*.tmp

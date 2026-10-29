@@ -1,7 +1,7 @@
 # OILGUARD: Forecasting-Based Early Warning of Abnormal Events in Oil Wells
 ## Technical Research Report: Chronological Investigation, Empirical Results, and Reconciled Multi-Protocol Audit
 
-**Authors:** Antigravity Research Team  
+**Authors:** Ravva Nagarjun & Naveen Kumar N  
 **Domain:** Offshore Petroleum Engineering & Time Series Anomaly Detection  
 **Target Event:** Class 2 — Spurious Closure of Downhole Safety Valve (DHSV)  
 **Sensors:** Downhole Pressure Transducer (`P-TPT`, MPa) & Temperature Transducer (`T-TPT`, °C)  
@@ -347,4 +347,4 @@ All data, models, unit tests, and metrics are fully reproducible in the workspac
   ```
 
 ---
-*Report certified by the Antigravity Research Team. All metrics verified against `results/audited_v2/metrics/matched_far_comparison.csv`.*
+*Report prepared and certified by Ravva Nagarjun & Naveen Kumar N (B.M.S. College of Engineering). All metrics verified against `results/audited_v2/metrics/matched_far_comparison.csv`.*

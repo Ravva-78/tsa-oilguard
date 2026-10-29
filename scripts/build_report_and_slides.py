@@ -89,7 +89,7 @@ def build_word_report():
     meta_p.paragraph_format.space_after = Pt(0)
     
     runs_meta = [
-        ("Authors: ", True), ("Antigravity Research Team\n", False),
+        ("Authors: ", True), ("Ravva Nagarjun & Naveen Kumar N\n", False),
         ("Domain: ", True), ("Offshore Petroleum Engineering & Time Series Anomaly Detection\n", False),
         ("Target Event: ", True), ("Class 2 — Spurious Closure of Downhole Safety Valve (DHSV)\n", False),
         ("Sensors: ", True), ("Downhole Pressure Transducer (P-TPT, MPa) & Temperature Transducer (T-TPT, °C)\n", False),
@@ -536,7 +536,7 @@ def build_presentation():
     p2.font.color.rgb = PptxRGBColor(0xFF, 0xFF, 0xFF)
 
     p3 = tf1.add_paragraph()
-    p3.text = "\nFrom Initial TSA Baselines to Operational Early Warning in Offshore Oil Wells\nAntigravity Research Team | October 2026"
+    p3.text = "\nFrom Initial TSA Baselines to Operational Early Warning in Offshore Oil Wells\nRavva Nagarjun & Naveen Kumar N | October 2026"
     p3.font.size = PptxPt(14)
     p3.font.color.rgb = PptxRGBColor(0xBD, 0xC3, 0xC7)
 
